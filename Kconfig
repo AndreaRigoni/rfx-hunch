@@ -125,13 +125,13 @@ menuconfig  ENABLE_EXTSRC
 if ENABLE_EXTSRC
 
   # //  LIBJIT  //
-  source conf/kscripts/ext_libjit.kconfig
+  # source conf/kscripts/ext_libjit.kconfig
 
   # //  LLVM  //
-  source conf/kscripts/ext_llvm.kconfig
+  # source conf/kscripts/ext_llvm.kconfig
 
   # //  CCSTICKERS  //
-  source conf/kscripts/ext_ccStickers.kconfig
+  # source conf/kscripts/ext_ccStickers.kconfig
 
   # //  NODEJS_NODE  //
   source conf/kscripts/ext_nodejs_node.kconfig
@@ -142,11 +142,13 @@ if ENABLE_EXTSRC
 endif # ENABLE_EXTSRC
 
 
+
+
 # //////////////////////////////////////////////////////////////////////////// #
 # //  YOCTO  ///////////////////////////////////////////////////////////////// #
 # //////////////////////////////////////////////////////////////////////////// #
 
-  source conf/kscripts/yocto.kconfig
+#  source conf/kscripts/yocto.kconfig
 
 
 

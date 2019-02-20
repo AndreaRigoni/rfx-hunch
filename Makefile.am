@@ -23,7 +23,7 @@ include Common.mk
 AM_MAKEFLAGS = -j$(MAKE_PROCESS)
 ACLOCAL_AMFLAGS = -I conf/m4
 
-SUBDIRS = ext src
+SUBDIRS = src
 
 all: ##@all all target
 all:

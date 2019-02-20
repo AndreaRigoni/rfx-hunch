@@ -19,13 +19,11 @@
 ## ////////////////////////////////////////////////////////////////////////// //
 
 include Common.mk
-include $(top_srcdir)/conf/kscripts/yocto.mk
-
 
 AM_MAKEFLAGS = -j$(MAKE_PROCESS)
 ACLOCAL_AMFLAGS = -I conf/m4
 
-SUBDIRS = ext src
+SUBDIRS = src
 
 all: ##@all all target
 all:
@@ -34,12 +32,3 @@ clean-local:
 
 MOSTLYCLEANFILES =
 
-
-hello.log: ##@log write hello.log file
-hello.log:
-	@ echo "hello bootstrap" > $@
-
-
-print-hello: EXAMPLE_STRING_VAR = not set
-print-hello:
-	@ echo "this is the var: $(EXAMPLE_STRING_VAR)"

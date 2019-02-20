@@ -24,14 +24,14 @@ dnl Process this file with autoconf to produce a configure script.
 
 dnl AUTOCONF ///////////////////////////////////////////////////////////////////
 AC_PREREQ([2.69])
-AC_INIT([autoconf-bootstrap], [0.1], [andrea.rgn@gmail.com])
+AC_INIT([rfx-hunch], [0.1], [andrea.rgn@gmail.com])
 AC_CONFIG_MACRO_DIRS([conf/m4])
 AC_CONFIG_AUX_DIR([conf])
 dnl AC_CONFIG_SRCDIR([...])
 AC_CANONICAL_TARGET
 
 dnl AUTOMAKE ///////////////////////////////////////////////////////////////////
-AM_INIT_AUTOMAKE([1.14 foreign subdir-objects])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 
 dnl update submodules at first ... (must be cleaned out)
@@ -110,13 +110,13 @@ m4_sinclude(conf/kscripts/nodejs.ac)
 m4_sinclude(conf/autoconf-doxygen/doxygen.ac)
 
 ## EXT_LIBJIT ##
-m4_sinclude(conf/kscripts/ext_libjit.ac)
+# m4_sinclude(conf/kscripts/ext_libjit.ac)
 
 ## EXT_LLVM ##
-m4_sinclude(conf/kscripts/ext_llvm.ac)
+# m4_sinclude(conf/kscripts/ext_llvm.ac)
 
 ## EXT_CCSTICKERS ##
-m4_sinclude(conf/kscripts/ext_ccStickers.ac)
+# m4_sinclude(conf/kscripts/ext_ccStickers.ac)
 
 ## EXT_NODEJS_NODE ##
 m4_sinclude(conf/kscripts/ext_nodejs_node.ac)
@@ -126,88 +126,34 @@ m4_sinclude(conf/kscripts/ext_mdsplus.ac)
 
 ## EXT ##
 AX_KCONFIG_MODULES([EXT],
-		  [libjit],[libjit external sources],
-		  [llvm],[llvm external sources],
-		  [ccStickers],[ccStickers external sources],
 		  [nodejs-node],[nodejs node external sources],
 		  [mdsplus],[mdsplus external sources]
 		  )
 AC_SUBST([EXT_MODULES])
 
 ## YOCTO ##
-m4_sinclude(conf/kscripts/yocto.ac)
+# m4_sinclude(conf/kscripts/yocto.ac)
 
 ## // GIT IGNORE // ##
 AX_GITIGNORE_ADD_PATH([${builddir}])
 AX_GITIGNORE_SUBST
 
 
-# //////////////////////////////////////////////////////////////////////////// #
-# //  EXAMPLES /////////////////////////////////////////////////////////////// #
-# //////////////////////////////////////////////////////////////////////////// #
-
-AX_KCONFIG_VAR_ENABLE([EXAMPLE_BOOL_VAR],["Set example bool var"])
-AC_SUBST([EXAMPLE_BOOL_VAR])
-
-AX_KCONFIG_VAR_WITH([EXAMPLE_STRING_VAR],["Set example string var"])
-AC_SUBST([EXAMPLE_STRING_VAR])
-
-AX_KCONFIG_MODULES([MDS],[java],[])
-AX_KCONFIG_MODULES([MDS],[lv],[labview],
-			 [ni],[national instruments components])
-AC_SUBST(MDS_JAVA)
-AC_SUBST(MDS_LV)
-AC_SUBST(MDS_NI)
-AC_SUBST(MDS_MODULES)
-
-
-AX_KCONFIG_MODULES([],[mod1],[],
-		      [mod2],[],
-		      [mod3],[])
-AC_SUBST(MOD1)
-AC_SUBST(MOD2)
-AC_SUBST(MOD3)
-AC_SUBST(MODULES)
-
-
-AS_ECHO()
-AS_BOX([// EXAMPLES CONFIG VARIABLES //////], [\/])
-AS_ECHO()
-AS_ECHO(["EXAMPLE_BOOL_VAR --------> $EXAMPLE_BOOL_VAR"])
-AS_ECHO(["EXAMPLE_STRING_VAR ------> $EXAMPLE_STRING_VAR"])
-AS_ECHO()
-AS_ECHO(["MDS_MODULES_AVAILABLE ---> ${MDS_MODULES_AVAILABLE}"])
-AS_ECHO(["MDS_MODULES_ENABLED -----> ${MDS_MODULES_ENABLED}"])
-AS_ECHO(["MDS_MODULES_DISABLED ----> ${MDS_MODULES_DISABLED}"])
-AS_ECHO(["MDS_MODULES -------------> ${MDS_MODULES}"])
-AS_ECHO()
-AS_ECHO(["MODULES_AVAILABLE -------> ${MODULES_AVAILABLE}"])
-AS_ECHO(["MODULES_ENABLED ---------> ${MODULES_ENABLED}"])
-AS_ECHO(["MODULES_DISABLED --------> ${MODULES_DISABLED}"])
-AS_ECHO(["MODULES -----------------> ${MODULES}"])
-AS_ECHO()
-AS_ECHO(["ENABLE_DOXYGEN ------------------> ${ENABLE_DOXYGEN}"])
-AS_ECHO(["DOXYGEN_MODULES_AVAILABLE -------> ${DOXYGEN_MODULES_AVAILABLE}"])
-AS_ECHO(["DOXYGEN_MODULES_ENABLED ---------> ${DOXYGEN_MODULES_ENABLED}"])
-AS_ECHO(["DOXYGEN_MODULES_DISABLED --------> ${DOXYGEN_MODULES_DISABLED}"])
-AS_ECHO(["DOXYGEN_MODULES -----------------> ${DOXYGEN_MODULES}"])
-AS_ECHO()
-
 
 
 AC_CONFIG_FILES( 
                  Makefile
 				 .gitignore
-				 src/Makefile
-				 src/qt_example/Makefile
-				 src/sh_template/Makefile
-dnl				 src/libjit_examples/Makefile
-				 src/parse_examples/Makefile
-				 src/nodejs/Makefile				 
-				 src/project_variables/Makefile
-				 src/mds_example/Makefile
+				 .examples/Makefile
+				 .examples/qt_example/Makefile
+				 .examples/sh_template/Makefile
+				 .examples/parse_examples/Makefile
+				 .examples/nodejs/Makefile				 
+				 .examples/project_variables/Makefile
+				 .examples/mds_example/Makefile
 				 doc/Makefile
-				 doc/wiki/Makefile
 				 ext/Makefile
+				 src/Makefile
+				 src/Tprofile_read/Makefile
                )
 AC_OUTPUT

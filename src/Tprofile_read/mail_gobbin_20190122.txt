@@ -1,0 +1,98 @@
+
+Subject: file sav con profili temperatura da DSX3
+From: Marco Gobbin <marco.gobbin@igi.cnr.it>
+Date: 22.01.2019 11:15
+To: RIGONI Andrea <andrea.rigoni@igi.cnr.it>, CAVAZZANA Roberto <roberto.cavazzana@igi.cnr.it>
+CC: Lionello Marrelli <Lionello.Marrelli@igi.cnr.it>
+
+Ciao,
+
+vi ho messo i files .sav in linux nel mio scracth nella cartella: /scratch/gobbin/rigoni/
+
+Ecco una breve legenda per le varie grandezze:
+
+struttura principale:
+restore,'dsx3_30843.sav'    
+ help,st,/st                                                    
+T00             STRUCT    -> <Anonymous> Array[1]  -->sottostrutture con i dati del DSX3 ad ogni tempo
+   T01             STRUCT    -> <Anonymous> Array[1]
+   T02             STRUCT    -> <Anonymous> Array[1]
+   T03             STRUCT    -> <Anonymous> Array[1]
+   T04             STRUCT    -> <Anonymous> Array[1]
+   T05             STRUCT    -> <Anonymous> Array[1]
+   SHOT            INT          30843
+   T1_ARR          FLOAT     Array[6]-->array con i tempi di inizio per ogni ciclo qsh contenuto nelle sottostrutture sopra
+   T2_ARR          FLOAT     Array[6]-->array con i tempi di fine per ogni ciclo qsh contenuto nelle sottostrutture sopra
+   N_QSH           LONG                 6-->numero di cicli QSH considerati (=numero sottostrutture)
+   T               FLOAT     Array[5800]-->array dei tempi per tutta la scarica
+   IP              FLOAT     Array[5800]-->corrente di plasma
+   DENS            FLOAT     Array[5800]-->densità (ne$, attenzione a volte l'interferometro aveva problemi)
+   TE              FLOAT     Array[5800]-->temperatura del doppio filtro zona centrale (DSXM,Te$)
+   F               FLOAT     Array[5800]-->F da pulsefile
+   TH              FLOAT     Array[5800]--> Theta da pulsefile
+   POW             FLOAT     Array[5800]-->Pohm del pulsefile
+   VT              FLOAT     Array[5800]-->vloop da pulsefile
+   VP              FLOAT     Array[5800]-->vpoloidale
+   B0              DOUBLE    Array[5800]-->square root della somma quadratica degli m=0
+   B07             DOUBLE    Array[5800]      -->ampiezza m=0,n=7              
+   B08             DOUBLE    Array[5800]-->(0,8)
+   B06             DOUBLE    Array[5800]-->(0,6)
+   B7              DOUBLE    Array[5800]-->bphi al bordo del dominante (1,-7)
+   BS              DOUBLE    Array[5800]-->square root della somma quadratica dei secondari (m=1, n da -8 a -18)
+   B8              DOUBLE    Array[5800]-->bphi al bordo del (1,-8)
+   B9              DOUBLE    Array[5800]-->bphi al bordo del  (1,-9)
+   NS              DOUBLE    Array[5800]-->Ns
+
+poi per ogni sottostruttura:
+
+ help,st.t00,/st        
+** Structure <1efcc68>, 18 tags, length=560752, data length=560752, refs=2:
+   GRAD1           FLOAT     Array[52]-->non considerare
+   GRAD2           FLOAT     Array[52]--> stima del gradiente massimo ad ogni istante (profili considerati piccati o panettone quando |grad2|>2000keV/m)
+   GRAD3           FLOAT     Array[52]-->non considerare
+   GRAD4           FLOAT     Array[52]-->non considerare
+   TEMPI           FLOAT     Array[52]-->array dei tempi nella sottostruttura
+   POS1            FLOAT     Array[52]-->non considerare
+   POS2            FLOAT     Array[52]--> posizione del gradiente massimo (in metri, nel senso del parametro di impatto delle corde DSX3)
+   POS3            FLOAT     Array[52]-->non considerare
+   POS4            FLOAT     Array[52]-->non considerare
+   TCENTRO         FLOAT     Array[52]-->temperatura centrale del DSX3
+   TBORDO          FLOAT     Array[52]-->temperatura più esterna del DSX3 (quindi a parametro di impatto =0.3m circa, non è il bordo in realtà ma zona di mezzo)
+   PREL3           FLOAT     Array[20, 52]-->ad ogni istante (TEMPI) matrice con tempi (52 in questo caso) e parametri di impatto del DSX3(20)
+   TE3             FLOAT     Array[20, 52]-->ad ogni istante matrice con tempi e profilo della temperatura misurato dal DSX3
+   RHO3            FLOAT     Array[20, 52]-->ad ogni istante (TEMPI) matrice con tempi (52 in questo caso) e rimappatura dei parametri di impatto
+   RX3             FLOAT     Array[20, 52]--> non considerare
+   MAPRO           FLOAT     Array[51, 51, 52]-->ad ogni istante mappa della topologia elicoidale
+   XXG             DOUBLE    Array[51]-->griglia in X per mapro
+   YYG             DOUBLE    Array[51]-->griglia in Y per mapro
+
+Esempio plot temperatura DSX3:
+plot,st.t00.prel3[*,10],st.t00.te3[*,10],ps=4
+
+stesso profilo rimappato:
+plot,st.t00.rho3[*,10],st.t00.te3[*,10],ps=4,/yst
+
+contour della topologia:
+loadct,39
+contour,st.t00.mapro[*,*,10],st.t00.xxg,st.t00.yyg,/iso,nlev=100
+
+Se avete bisogno o ho dimenticato qualcosa venite pure a chiedere.
+
+ciao,
+Marco
+
+
+
+
+
+-- 
+Marco Gobbin
+Consorzio RFX - Area del CNR 
+Corso Stati Uniti 4, 35127, Padova
+Italy
+Tel: +390498295683
+
+"Tornate all'antico e sarà un progresso."
+(G.Verdi)
+
+

@@ -1,5 +1,7 @@
-# autoconf-bootstrap
-Base setup for autoconf distribution
+# RFX-Hunch
+
+further documentation is available in [USER MANUAL](doc/README.md)
+
 
 
 This is a autoconf/automake minimal setup to start a new project. It uses Kconfig integration 

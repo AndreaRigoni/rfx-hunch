@@ -1,8 +1,7 @@
 include $(top_srcdir)/Common.mk
 
-PYTHON_PACKAGES = numpy
 
-
+PYTHON_PACKAGES = pip six numpy wheel mock # python packages needed for tf
 
 
 ##    .########.########.##....##..######...#######..########..########.##........#######..##......##  
@@ -19,14 +18,12 @@ tensorflow: ##@ext tensorflow
 tensorflow_URL    = https://github.com/tensorflow/tensorflow.git
 tensorflow_BRANCH = master
 
-# python packages needed for tf
-PYTHON_PACKAGES += pip six numpy wheel mock
 
 DOCKER_TARGETS = tf-%
 tf-init: ##@tf build process
 tf-init: DOCKER_IMAGE = tensorflow/tensorflow:nightly-devel-py3
 tf-init: DOCKER_CONTAINER = tf-build
-tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages/tensorflow
+tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages
 tf-init: | tensorflow pip-install
 	@ cd tensorflow;
 
@@ -43,9 +40,6 @@ tf-build: tf-configure | tf-init
 tf-shell: tf-init
 	@ bash
 
-
-
-
 define _install_vscode =
  apt-get update; \
  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
@@ -57,26 +51,22 @@ define _install_vscode =
  apt install -y code;
 endef
 
-tf-dev-init: USER=root
-tf-dev-init: ##@tf install other deps inside docker container
-tf-dev-init:
+tf-install-vscode: USER=root
+tf-install-vscode: ##@@tf install vscode inside docker container (not working in docker-targets)
+tf-install-vscode:
 	@ $(_install_vscode)
 
-tf-mdsplus-init: USER=root
-tf-mdsplus-init: ##@tf install mdsplus in container
-tf-mdsplus-init:
+tf-install-mdsplus: USER=root
+tf-install-mdsplus: ##@tf install mdsplus in container
+tf-install-mdsplus:
 	@ wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
 	  apt-key add mdsplus.gpg.key; \
-		add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
+	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
 	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
 	  apt install -y mdsplus-alpha; \
-		cd /usr/local/mdsplus/mdsobjects/python/; \
-		python3 setup.py install;
+	  cd /usr/local/mdsplus/mdsobjects/python/; \
+	  python3 setup.py install;
 
-
-DOCKER_TARGETS += tf-edit
-tf-edit:
-	@ $(MAKE) edit-code
 
 
 
@@ -97,8 +87,16 @@ read: $(PYSCRIPTS) pip-install
 	@ python $<;
 
 
+DOCKER_TARGETS += autoenc
+autoenc: ##@tprofile autoencoder test 
+autoenc: DOCKER_CONTAINER = tf-build
+autoenc: autoenc_1.py | pip-install
+	@ python $<;
 
 
-
+DOCKER_TARGETS += run
+run: DOCKER_CONTAINER = tf-build
+run: $(NAME) $(PYSCRIPTS) | pip-install
+	@ python $<
 
 

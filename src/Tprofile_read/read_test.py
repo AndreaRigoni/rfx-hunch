@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 from scipy.io import readsav
 import numpy as np
@@ -7,7 +6,6 @@ import sys
 import MDSplus as mds
 
 data_dir = '/scratch/gobbin/rigoni/'
-
 argv = sys.argv 
 
 if len( argv ) > 1 :

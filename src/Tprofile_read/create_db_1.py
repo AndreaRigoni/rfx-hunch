@@ -3,6 +3,11 @@ from scipy.io import readsav
 
 import sys 
 
+
+
+
+
+
 def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 	file = 'dsx3_%d.sav' % shot
 	print file
@@ -32,7 +37,6 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 
 	# per listare i nomi dei campi
 	# print qshs[0].dtype.names
-
 	# per la label faccio shot_tttt 
 
 	# (fieldname, datatype, shape)

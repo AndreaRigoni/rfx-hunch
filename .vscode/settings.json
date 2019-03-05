@@ -1,0 +1,13 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.autoComplete.extraPaths": [
+        "{${workspaceFolder}/build/src/Tprofile_read/dist-packages"
+    ],
+
+    // https://github.com/Microsoft/vscode-python/issues/2594
+    "python.jediEnabled": true,
+
+    // try to set terminal in docker container for external vscode session
+    // "terminal.integrated.shell.linux": "make -C ${workspaceFolder}/build/src/Tprofile_read/ tf-shell"
+
+} 

@@ -7,6 +7,14 @@
             "label": "read",
             "type": "shell",
             "command": "echo Hello"
+        },
+        {
+            "label": "run python",
+            "command": "make -C ${workspaceFolder}/build/src/Tprofile_read run NAME=autoenc_1.py",
+            "type": "shell",
+            "problemMatcher": [
+                "$eslint-compact"
+            ]
         }
     ]
 }

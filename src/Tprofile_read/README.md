@@ -33,5 +33,13 @@
 | [Learning Deep Representations for Graph Clustering](https://www.aaai.org/ocs/index.php/AAAI/AAAI14/paper/viewFile/8527/8571) |  AAAI 2014 | [python](https://github.com/quinngroup/deep-representations-clustering) |
 | [Towards Unsupervised Classification with Deep Generative Models(HCDVAE)](https://openreview.net/pdf?id=ryb83alCZ) | ICLR 2018 |  |
 
+
+# Variational Autoencoders - bibliography hints
+
+|  Paper  |   Code   |
+|:--------|:--------:|
+| [Understanding the Variational Lower Bound - Xitong Yang](http://legacydirs.umiacs.umd.edu/~xyang35/files/understanding-variational-lower.pdf) | - |
+
+
 ## TIPS
 If you find this repository useful to your research or work, it is really appreciate to star this repository.

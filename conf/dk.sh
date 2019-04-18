@@ -245,10 +245,12 @@ execute()  {
     ${MAKESHELL} ${quoted_args};
   else
     docker exec ${INT} --user ${USER} ${DOCKER_CONTAINER} /bin/bash -l -c \
-		 "save_path=\$PATH; $M_ENV \
-		  export PATH=\$save_path; \
+		 "save_path=\$PATH; \
+		  $M_ENV \
+			source /etc/profile; \
+			export PATH=\$save_path; \
 			cd $(pwd); \
-			export MAKESHELL=${DOCKER_SHELL}; \
+			export MAKESHELL="${DOCKER_SHELL}"; \
 			${quoted_args}";
   fi
 }
@@ -328,6 +330,7 @@ start() {
   						 -v ${user_home}:${user_home} \
   						 -v $(pwd):$(pwd) \
   						 -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+  						 -v /run/user/${user_id}:/run/user/${user_id} \
   						 --tmpfs /run --tmpfs /run/lock \
   						 --cap-add=SYS_ADMIN \
   						 ${DOCKER_SHARES_VAR} \

@@ -68,9 +68,8 @@ pfit, pcov = curve_fit( fit_func, rho, te, p0=p0 )
 ax2.plot( xp, fit_func( xp, *pfit ), 'b' )
 
 # stop
-
 # funzione di voto del ransac
-#def eval_func( rho_f, te_f, inlier_threshold, rho_0, te_ext, delta_te, grad_te ) :
+# def eval_func( rho_f, te_f, inlier_threshold, rho_0, te_ext, delta_te, grad_te ) :
 	#alpha = grad_te / delta_te
 	#delta_te = te_f - ( te_ext + 0.5*delta_te * ( 1 + np.tanh( alpha*(rho_f - rho_0) ) ) )
 	#inliers = np.abs( delta_te ) <  inlier_threshold

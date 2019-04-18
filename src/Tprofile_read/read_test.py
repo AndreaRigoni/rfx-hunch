@@ -2,37 +2,41 @@ import matplotlib.pyplot as plt
 from scipy.io import readsav
 import numpy as np
 
-import sys 
+import sys,os
 import MDSplus as mds
 
-data_dir = '/scratch/gobbin/rigoni/'
-argv = sys.argv 
 
+abs_srcdir = os.environ.get('abs_top_srcdir')
+data_dir = abs_srcdir + '/data/gobbin_db/'
+
+argv = sys.argv 
 if len( argv ) > 1 :
 	try:
 		shot = int( argv[1] )
 	except:
-		print "invalid shot: ", argv[1]
+		print("invalid shot: ", argv[1])
 		sys.exit(0)
 else:
 	shot = 30808
 	
 if ( shot < 15600 or shot > 39391 ) :
-	print "invalid shot num: ", shot
+	print("invalid shot num: ", shot)
 	sys.exit(0)
 
 
+
+
 file = 'dsx3_%d.sav' % shot
-print file
+print(file)
 
 try:
 	x = readsav( data_dir+file, python_dict=False ).st
 	# x = readsav( data_dir+file, python_dict=True )
 except:
-	print "invalid file: ", file
+	print("invalid file: ", file)
 	sys.exit(0)
 
-plt.ion()
+# plt.ion()
 
 fig = plt.figure( 'i_pla' )
 fig.set_size_inches( 8, 5.25 )
@@ -70,7 +74,9 @@ for i_qsh in range( n_qsh ) :
 	qshs.append( x[qsh_name][0] )
 
 # per listare i nomi dei campi
-print qshs[0].dtype.names
+print(qshs[0].dtype.names)
+
+# plt.show()
 
 fig = plt.figure( 'Flux' )
 fig.set_size_inches( 8, 7 )
@@ -82,6 +88,7 @@ ax.set_aspect('equal', adjustable='box')
 # ax.axis( 'equal' )
 ax.set_title( shot )
 
+
 tree  = mds.Tree("RFX", shot )
 alpha_tor = tree.getNode( r'\A::ALPHA_TOR' )
 Theta_0_tor = tree.getNode( r'\A::THETA0_TOR' )
@@ -92,7 +99,7 @@ Theta_0 = tree.getNode( r'\A::THETA_R0' )
 try:
 	alpha_tor.data()
 except:
-	print "no tor eq data"
+	print("no tor eq data")
 
 fig = plt.figure( 'AT0' )
 fig.set_size_inches( 8, 5.25 )
@@ -110,3 +117,4 @@ ax.set_ylim( -0.2, 12. )
 ax.set_xlim( -0.05, 0.55 )
 ax.legend()
 
+plt.show()

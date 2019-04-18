@@ -15,6 +15,14 @@
             "problemMatcher": [
                 "$eslint-compact"
             ]
+        },
+        {
+            "label": "debug",
+            "command": "make -C ${workspaceFolder}/build/src/Tprofile_read debug NAME=test_env.py",
+            "type": "shell",
+            "problemMatcher": [
+                "$eslint-compact"
+            ]
         }
     ]
 }

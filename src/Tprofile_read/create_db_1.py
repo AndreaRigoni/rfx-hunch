@@ -1,16 +1,12 @@
 import numpy as np
 from scipy.io import readsav
-
-import sys 
-
-
-
+import sys,os
 
 
 
 def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 	file = 'dsx3_%d.sav' % shot
-	print file
+	# print (file)
 	#shot = 30008
 	#file = r'shot_dsx3_%d.sav' % shot
 
@@ -18,14 +14,14 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 		x = readsav( data_dir+file, python_dict=False ).st
 		# x = readsav( data_dir+file, python_dict=True )
 	except:
-		print "file not found: ", file
+		print ("file not found: ", file)
 		sys.exit(0)
 
 
 	n_qsh = x.n_qsh[0]
 	t_qsh_begin = np.atleast_1d( x.t1_arr[0]*1E-3 )
 	t_qsh_end = np.atleast_1d( x.t2_arr[0]*1E-3 )
-	print n_qsh
+	print (file,' ',n_qsh)
 
 	t_min = t_qsh_begin[0]
 	t_max = t_qsh_end[-1]
@@ -52,9 +48,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 							('te','>f4', (20,) ),
 						] )
 
-
 	n_times_tot = 0
-	for qsh in qshs : 
+	for qsh in qshs :
 		n_times_tot += qsh.tempi[0].shape[0]
 
 	q_data = np.empty( n_times_tot, dtype=sample_dtype )
@@ -94,12 +89,12 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 
 	return q_data
 
-
 # ------------------------------------------------------------------------------
 
 from glob import glob
 
-data_dir = '/scratch/gobbin/rigoni/'
+abs_srcdir = os.environ.get('abs_top_srcdir')
+data_dir = abs_srcdir + '/data/gobbin_db/'
 
 file_list = glob( data_dir+r'dsx3*')
 
@@ -109,11 +104,10 @@ for fname in file_list :
 	shot_char_pos = fname.find( r'dsx3_' )+5
 	shot = np.int( fname[shot_char_pos:shot_char_pos+5] )
 	# print shot
-	q_list.append( read_te_prof( shot ) )
+	q_list.append( read_te_prof( shot, data_dir ) )
 	n_shots +=1
 
 q_all_data = np.concatenate( q_list )
 
 np.save( 'te_db_1', q_all_data, allow_pickle=False )
-
-print 'Saved %d profiles from %d shots.' % ( q_all_data.shape[0], n_shots )
+print ('Saved %d profiles from %d shots.' % ( q_all_data.shape[0], n_shots ))

@@ -83,7 +83,7 @@ argBr_rm_1_7 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1, -2, %
 absBt_rm_1_7_tc = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1,  7, %d, 1 )" % (t_start, t_end, correction ) )
 argBt_rm_1_7_tc = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1, -7, %d, 1 )" % (t_start, t_end, correction ) )
 
-absBt_rm_1_8 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -8, 1,  1, %d, 1 )" % (t_start, t_end, correction ) )
+absBt_rm_1_8    = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -8, 1,  1, %d, 1 )" % (t_start, t_end, correction ) )
 absBt_rm_1_8_tc = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -8, 1,  7, %d, 1 )" % (t_start, t_end, correction ) )
 
 absBt_rm_1_7_cyl = mds.Data.execute("spectrum_cyl( 0 , %6.4f, %6.4f, .0005, -7, 1,  1, %d )" % (t_start, t_end, correction ) )

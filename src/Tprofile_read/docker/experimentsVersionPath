@@ -1,0 +1,55 @@
+# Configurata fissa a active la versione sull'online per permettere l'accesso ai nuovi dati di DFLU post elaborati 
+#a_path      ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${a_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${a_ver}
+a_path      ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${a_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_active
+at_path      ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${a_ver}\;roserver::/shots/rfxdata/~t/ver_active
+
+dbot_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dbot_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dbot_ver}
+dedg_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dedg_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dedg_ver}
+dequ_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dequ_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::shots/rfxdata/~t/ver_${dequ_ver}
+
+#
+#dflu_path ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dflu_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dflu_ver}
+# 
+# modificato logico in modo che da  off-line possano essere visti gli impulsi del giorno
+dflu_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dflu_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_active
+
+dgpi_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dgpi_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dgpi_ver}
+dico28_path  ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dico28_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dico28_ver}
+disis_path  ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${disis_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${disis_ver}
+dscv_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dscv_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dscv_ver}
+dsfm_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsfm_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::shots/rfxdata/~t/ver_${dsfm_ver}
+dssp_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dssp_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dssp_ver}
+dstc_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dstc_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dstc_ver}
+dsxm_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsxm_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dsxm_ver}
+dsxt_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsxt_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dsxt_ver}
+dtsr_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dtsr_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dtsr_ver}
+dtse_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dtse_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dtse_ver}
+dccd_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dccd_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dccd_ver}
+dsxc_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsxc_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dsxc_ver}
+dmoss_path  ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dmoss_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dmoss_ver}
+dsxc_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsxc_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dsxc_ver}
+dsxv_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dsxv_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dsxv_ver}
+dter_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dter_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dter_ver}
+dpel_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dpel_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dpel_ver}
+dftc_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dftc_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dftc_ver}
+deso_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${deso_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${deso_ver}
+dmwr_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dmwr_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dmwr_ver}
+dpfr_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dpfr_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dpfr_ver}
+dnbi_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dnbi_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dnbi_ver}
+
+eda1_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${eda1_el_ver}\;roserver::/shots/rfxdata/~t/ver_${eda1_el_ver}
+eda2_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${eda2_el_ver}\;roserver::/shots/rfxdata/~t/ver_${eda2_el_ver}
+eda3_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${eda3_el_ver}\;roserver::/shots/rfxdata/~t/ver_${eda3_el_ver}
+
+edag_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${edag_el_ver}\;roserver::/shots/rfxdata/~t/ver_${edag_el_ver}
+edam_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${edam_el_ver}\;roserver::/shots/rfxdata/~t/ver_${edam_el_ver}
+edav_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${edav_el_ver}\;roserver::/shots/rfxdata/~t/ver_${edav_el_ver}
+
+mhd_ac_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${mhd_ac_el_ver}\;roserver::/shots/rfxdata/~t/ver_${mhd_ac_el_ver}
+mhd_bc_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${mhd_bc_el_ver}\;roserver::/shots/rfxdata/~t/ver_${mhd_bc_el_ver}
+mhd_br_el_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${mhd_br_el_ver}\;roserver::/shots/rfxdata/~t/ver_${mhd_br_el_ver}
+
+
+dnpa_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dnpa_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dnpa_ver}
+
+dli3_path   ${SERVER_NODE}/shots/rfxdata/~e~d000/~e~d~c00/~t/ver_${dli3_ver}\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdata/~t/ver_${dli3_ver}

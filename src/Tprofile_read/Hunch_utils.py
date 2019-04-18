@@ -171,9 +171,9 @@ class tSNE(Struct):
     from sklearn.manifold import TSNE
     tSNE = TSNE(n_components=2)
     data_X = None
+    data_Y = None
     data_C = None
     data_S = None
-    data_Y = None
     fig  = None
     interactive = True
     n_components  = property()
@@ -226,7 +226,7 @@ class tSNE(Struct):
     
     def draw_plt(self):            
         if self.fig is None:
-            self.fig = plt.figure()
+            self.fig = plt.figure('tSNE')
             self.fig.set_size_inches( 8, 5.25 )            
         plt.figure(self.fig.number)
         plt.clf()

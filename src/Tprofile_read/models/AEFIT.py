@@ -49,8 +49,8 @@ class AEFIT(tf.keras.Model):
             tf.keras.layers.Input(shape=(feature_dim,)),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 400, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
-            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(2*latent_dim),
             ]
         )
@@ -60,8 +60,8 @@ class AEFIT(tf.keras.Model):
             tf.keras.layers.Input(shape=(latent_dim,)),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
-            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 400, activation=tf.nn.relu),
             tf.keras.layers.Dense(units=feature_dim),
         ]
         )
@@ -105,11 +105,12 @@ class AEFIT(tf.keras.Model):
         #   
         return l_vae
 
-    def plot_latent(self, z):
+    def plot_generative(self, z):
         s = self.decode(tf.convert_to_tensor([z]),apply_sigmoid=True) 
         x,y = tf.split(s,2,axis=1)
         plt.plot(x[0],y[0])
 
+        
 
 
 def compute_gradients(model, x):
@@ -130,7 +131,7 @@ def vae_log_normal_pdf(sample, mean, logvar, raxis=1):
 def test_dummy(model, counts=60000, epoch=40, batch=100):
     import seaborn as sns
     from Dummy_g1data import Dummy_g1data
-    dc = Dummy_g1data(counts=counts, size=20)
+    dc = Dummy_g1data(counts=counts, size=int(model.feature_dim/2))
     # take from test set
     ts = dc.ds_array.batch(batch).make_one_shot_iterator().get_next()
     #ts = model.reparameterize(*model.encode(ts))    
@@ -154,13 +155,12 @@ def test_dummy(model, counts=60000, epoch=40, batch=100):
                 count += 1
 
                 if count % 20 == 0:
-                    print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))
-                    xy = model.reparameterize(*model.encode(ts))
-                    XY  = model.decode(xy,apply_sigmoid=True)
+                    print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
+                    z = model.reparameterize(*model.encode(ts))                                        
+                    XY  = model.decode(z,apply_sigmoid=True)
                     X,Y = tf.split(XY,2, axis=1)
 
-                    plt.figure(1)
-                    plt.clf()
+                    plt.figure('aefit_test').clf()                    
                     # for i in range(model.latent_dim):
                     for i in range(batch):
                         # sns.scatterplot(X[i],Y[i])

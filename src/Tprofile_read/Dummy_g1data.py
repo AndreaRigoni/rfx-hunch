@@ -17,21 +17,22 @@ class Dummy_g1data():
 
 
     kinds = [
-        {'mean': [0.2,0.8], 'sigma': [0.1,0.1], 'gain': [1,1] },
+        {'mean': [0.2,0.8], 'sigma': [0.1,0.1], 'gain': [1,1] },        
         {'mean': [0.8], 'sigma': [0.1], 'gain': [0.5] },
         {'mean': [0.5], 'sigma': [0.2], 'gain': [1] },
     ]
 
-    def __init__(self, counts=20, size=20):
+    def __init__(self, counts=20, size=20, noise_var=.1):
         self._counts = counts
         self._size = size
+        self._noise = noise_var
     
     def __len__(self):
         return self._counts
 
     def gen_pt(self, id, kind=None):
         def gauss(x, m, s, g):
-            return np.exp(-np.power(x-m, 2.) / (2 * np.power(s, 2.))) * g
+            return np.abs(np.exp(-np.power(x-m, 2.) / (2 * np.power(s, 2.))) * g + np.random.normal(0,self._noise,1))
         x = np.sort(np.random.rand(self._size))
         y = np.zeros_like(x)
         k = self.kinds[np.random.randint(len(self.kinds))]

@@ -68,11 +68,19 @@ export rfx_ver = inProgress
 # automatically reload the following files (this works only if 'ipysh' has been imported too)
 export IPY_AIMPORT = Hunch_utils models.AEFIT models.SPFIT
 
+
+DOCKER_TARGETS += te_db_1.npy
+te_db_1.npy: ##@data create npy database 
+te_db_1.npy: DOCKER_CONTAINER = tf-build
+te_db_1.npy: create_db_1.py | pip-install
+	@ python $< $(ARGS)
+
+
 DOCKER_TARGETS += runpy
-PYSCRIPTS = jpnb/STEP1_fit.py
+PYSCRIPTS = jpnb/STEP2_aefit.py
 runpy: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
 runpy: DOCKER_CONTAINER = tf-build
-runpy: $(NAME) $(PYSCRIPTS) | pip-install
+runpy: $(NAME) $(PYSCRIPTS) te_db_1.npy | pip-install
 	@ ipython -i $< $(ARGS)
 
 
@@ -80,7 +88,6 @@ DOCKER_TARGETS += jupyter
 jupyter: DOCKER_CONTAINER = tf-build
 jupyter: ##@jp start jupyter server on jpnb $(srcdir) folder
 	@ jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=$(abs_srcdir)/jpnb
-
 
 
 DOWNLOADS += rdipietro

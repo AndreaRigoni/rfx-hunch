@@ -226,7 +226,7 @@ class tSNE(Struct):
     
     def draw_plt(self):            
         if self.fig is None:
-            self.fig = plt.figure('tSNE')
+            self.fig = plt.figure()
             self.fig.set_size_inches( 8, 5.25 )            
         plt.figure(self.fig.number)
         plt.clf()

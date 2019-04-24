@@ -34,7 +34,7 @@ import ipysh
 
 class AEFIT(tf.keras.Model):
 
-    def __init__(self, feature_dim=40, latent_dim=3, latent_intervals=None):
+    def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None):
         super(AEFIT, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
@@ -47,10 +47,11 @@ class AEFIT(tf.keras.Model):
         self.inference_net = tf.keras.Sequential(
             [
             tf.keras.layers.Input(shape=(feature_dim,)),
+
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
-            tf.keras.layers.Dense(latent_dim * 400, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(2*latent_dim),
             ]
         )
@@ -60,8 +61,8 @@ class AEFIT(tf.keras.Model):
             tf.keras.layers.Input(shape=(latent_dim,)),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
-            tf.keras.layers.Dense(latent_dim * 400, activation=tf.nn.relu),
             tf.keras.layers.Dense(units=feature_dim),
         ]
         )
@@ -71,10 +72,11 @@ class AEFIT(tf.keras.Model):
 
     def sample(self, eps=None):
         if eps is None:
-            eps = tf.random.normal(shape=(100, self.latent_dim))
+            eps = tf.random.normal(shape=([-1,self.latent_dim]))
         return self.decode(eps, apply_sigmoid=True)
 
     def encode(self, X):
+        X = tf.clip_by_value(X,0.,1.)
         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
         return mean, logvar        
 
@@ -128,12 +130,19 @@ def vae_log_normal_pdf(sample, mean, logvar, raxis=1):
 
 
 
-def test_dummy(model, counts=60000, epoch=40, batch=100):
+def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=1e-3):    
     import seaborn as sns
-    from Dummy_g1data import Dummy_g1data
-    dc = Dummy_g1data(counts=counts, size=int(model.feature_dim/2))
-    # take from test set
-    ts = dc.ds_array.batch(batch).make_one_shot_iterator().get_next()
+    import Dummy_g1data as g1
+    from sklearn.cluster import KMeans
+    
+    fig = plt.figure('aefit_test')
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    fig.tight_layout()
+
+    if data is None:
+        data = g1.Dummy_g1data(counts=counts, size=int(model.feature_dim/2), noise_var=0.)
+    ts,ls = data.ds_array.batch(batch).make_one_shot_iterator().get_next()
     #ts = model.reparameterize(*model.encode(ts))    
     #
     # sample from random
@@ -142,33 +151,64 @@ def test_dummy(model, counts=60000, epoch=40, batch=100):
     # sample from base
     #ts = tf.eye(model.latent_dim)
 
-    ds = dc.ds_array.batch(batch)
-    #
+    kmeans = KMeans(n_clusters=model.latent_dim, random_state=0)
+
     count = 0
-    optimizer = tf.keras.optimizers.Adam(1e-4)
-    
+    optimizer = tf.keras.optimizers.Adam(loss_factor)
+    g1.test_gendata(data)
     for e in range(epoch):
-        ds = dc.ds_array.batch(batch)
+        ds = data.ds_array.batch(batch)
         for X in ds:
-                gradients, loss = compute_gradients(model, X)
+                X_data,_ = X
+                gradients, loss = compute_gradients(model, X_data)
                 apply_gradients(optimizer, gradients, model.trainable_variables)
                 count += 1
 
                 if count % 20 == 0:
                     print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
-                    z = model.reparameterize(*model.encode(ts))                                        
+                    m,v = model.encode(ts)
+
+                    z = model.reparameterize(m,v)
                     XY  = model.decode(z,apply_sigmoid=True)
                     X,Y = tf.split(XY,2, axis=1)
-
-                    plt.figure('aefit_test').clf()                    
+                    
+                    ax1.clear()
+                    ax1.plot(m[:,0],m[:,1],'.')
+                    # plt.plot(v[:,0],v[:,1],'.')
+                    
+                    ax2.clear()                    
                     # for i in range(model.latent_dim):
                     for i in range(batch):
                         # sns.scatterplot(X[i],Y[i])
-                        plt.plot(X[i],Y[i],'.')
+                        ax2.plot(X[i],Y[i],'.')
                 #     # plt.figure(2)
                 #     # plt.clf()                
                 #     # plt.plot(model._x,s[0])
                 #     # sns.scatterplot(x[0],y[0])
-                    plt.pause(0.001)
+                    fig.canvas.draw()
+                    # plt.pause(0.001)
 
 
+def plot_supervised_latent_distributions(model, counts=10000):
+    import Dummy_g1data as g1
+    dc = g1.Dummy_g1data(counts=counts, size=int(model.feature_dim/2), noise_var=0.)
+    data = dc.ds_array.batch(1)
+    clist=['red','blue','green','purple','grey']
+    plt.figure('plot_supervised_latent_distributions')
+    plt.clf()
+    count = 0
+    for X in data:
+        ds,dl = X
+        m,v = model.encode(ds)
+        z   = model.reparameterize(m,v)
+        #XY  = model.decode(z,apply_sigmoid=True)
+        plt.plot(z[:,0],z[:,1],'.',color=clist[dl%len(clist)])
+        count += 1
+        if count % 100 == 0:
+            plt.pause(0.001)
+
+
+
+
+
+    pass

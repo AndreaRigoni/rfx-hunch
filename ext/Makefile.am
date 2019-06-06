@@ -172,7 +172,7 @@ tensorflow_BRANCH = master
 
 DOCKER_TARGETS = tf-%
 tf-init: ##@tf build process
-tf-init: DOCKER_IMAGE = tensorflow/tensorflow:nightly-devel-py3
+tf-init: DOCKER_IMAGE = tensorflow/tensorflow:devel-py3
 tf-init: DOCKER_CONTAINER = tf-build
 tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages
 tf-init: PYTHON_PACKAGES = pip six numpy wheel mock # python packages needed for tf
@@ -194,34 +194,32 @@ tf-shell: tf-init
 
 
 
+# define _install_vscode =
+#  apt-get update; \
+#  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
+#  apt install -y libasound2 git; \
+#  apt install -y python3-tk pylint; \
+#  wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | apt-key add -; \
+#  add-apt-repository -ru "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
+#  add-apt-repository -u "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
+#  apt install -y code;
+# endef
 
+# tf-install-vscode: USER=root
+# tf-install-vscode: ##@@tf install vscode inside docker container (not working in docker-targets)
+# tf-install-vscode:
+# 	@ $(_install_vscode)
 
-define _install_vscode =
- apt-get update; \
- apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
- apt install -y libasound2 git; \
- apt install -y python3-tk pylint; \
- wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | apt-key add -; \
- add-apt-repository -ru "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
- add-apt-repository -u "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
- apt install -y code;
-endef
-
-tf-install-vscode: USER=root
-tf-install-vscode: ##@@tf install vscode inside docker container (not working in docker-targets)
-tf-install-vscode:
-	@ $(_install_vscode)
-
-tf-install-mdsplus: USER=root
-tf-install-mdsplus: ##@tf install mdsplus in container
-tf-install-mdsplus:
-	@ wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
-	  apt-key add mdsplus.gpg.key; \
-	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
-	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
-	  apt install -y mdsplus-alpha; \
-	  cd /usr/local/mdsplus/mdsobjects/python/; \
-	  python3 setup.py install;
+# tf-install-mdsplus: USER=root
+# tf-install-mdsplus: ##@tf install mdsplus in container
+# tf-install-mdsplus:
+# 	@ wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
+# 	  apt-key add mdsplus.gpg.key; \
+# 	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
+# 	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus Alpha"; \
+# 	  apt install -y mdsplus-alpha; \
+# 	  cd /usr/local/mdsplus/mdsobjects/python/; \
+# 	  python3 setup.py install;
 
 
 
@@ -243,7 +241,7 @@ tf-install-mdsplus:
 DOWNLOADS += cppop-example
 cppop-example: ##@cppop download example
 cppop_example_URL = https://github.com/andrearigoni/tensorflow-cpp-op-example.git
-cppop_example_BRANCH = master
+cppop_example_BRANCH = tf-2.0
 cppop_example_DIR = cppop-example
 
 DOCKER_TARGETS += cppop-example/Makefile
@@ -257,11 +255,13 @@ ext-cppop-example: tf-init cppop-example/Makefile | cppop-example
 	@ make -C cppop-example all
 
 DOCKER_TARGETS += ext-cppop-example-test
-ext-cppop-example: ##@cppop run tests
+ext-cppop-example-test: ##@cppop run tests
 ext-cppop-example-test: DOCKER_CONTAINER = tf-build
 ext-cppop-example-test: ext-cppop-example
 	@ cd cppop-example; \
 	  LD_LIBRARY_PATH=$$(pwd) python3 inner_product_tests.py
+
+
 
 
 

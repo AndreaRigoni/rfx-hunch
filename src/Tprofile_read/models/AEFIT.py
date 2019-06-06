@@ -112,6 +112,13 @@ class AEFIT(tf.keras.Model):
         x,y = tf.split(s,2,axis=1)
         plt.plot(x[0],y[0])
 
+    def save(self, filename):
+        self.inference_net.save_weights(filename+'_encoder.kcp')
+        self.generative_net.save_weights(filename+'_decoder.kcp')
+
+    def load(self, filename):
+        self.inference_net.load_weights(filename+'_encoder.kcp')
+        self.generative_net.load_weights(filename+'_decoder.kcp')
         
 
 

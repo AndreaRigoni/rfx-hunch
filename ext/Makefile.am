@@ -186,7 +186,8 @@ tensorflow/.tf_configure.bazelrc: | tf-init
 
 tf-configure: tensorflow/.tf_configure.bazelrc
 
-tf-build: tf-configure | tf-init
+tf-build: ##@tf build tensorflow from sources in docker container
+tf-build: tf-configure | tf-init tensorflow
 	@ cd tensorflow; bazel build --config=opt //tensorflow/tools/pip_package:build_pip_package
 
 tf-shell: tf-init

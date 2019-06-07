@@ -33,19 +33,21 @@ class Dummy_g1data():
     def __len__(self):
         return self._counts
 
-    def gen_pt(self, id, kind=None):
+    def gen_pt(self, id, x=None, kind=None):
         def gauss(x, m, s, g):
             return np.abs(np.exp(-np.power(x-m, 2.) / (2 * np.power(s, 2.))) * g + np.random.normal(0,self._noise,1))
-        x = np.sort(np.random.rand(self._size))
-        y = np.zeros_like(x)
-        l = np.random.randint(len(self.kinds))
-        k = self.kinds[l]
+        if x is None:
+            x = np.sort(np.random.rand(self._size))
+        y = np.zeros_like(x)        
+        if kind is None:
+            kind = np.random.randint(len(self.kinds))
+        k = self.kinds[kind]
         if len(np.shape(k['mean'])) > 0:
             for m,s,g in np.stack([k['mean'],k['sigma'],k['gain']],axis=1):
                 y += gauss(x,m,s,g)
         else:
             y = gauss(x,k['mean'],k['sigma'],k['gain'])
-        return np.stack([x,y], axis=1), l
+        return np.stack([x,y], axis=1), kind
     
     def get_tf_dataset_tuple(self):
         types = tf.float32, tf.float32, tf.int32

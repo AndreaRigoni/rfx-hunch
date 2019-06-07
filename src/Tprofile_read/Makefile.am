@@ -66,7 +66,10 @@ export rfx_ver = inProgress
 
 
 # automatically reload the following files (this works only if 'ipysh' has been imported too)
-export IPY_AIMPORT = Hunch_utils models.AEFIT models.SPFIT
+export IPY_AIMPORT = Hunch_utils \
+					 Hunch_lsplot \
+					 models.AEFIT models.SPFIT \
+					 Dummy_g1data
 
 
 DOCKER_TARGETS += te_db_1.npy
@@ -112,44 +115,44 @@ rdipietro_DIR = $(srcdir)/jpnb/rdipietro
 ##   .##.....##.##.......##........##....##..##.......##....##.##.....##....##....##.......##.....##
 ##   .########..########.##........##.....##.########..######..##.....##....##....########.########.
 
-tf-install-vscode: USER=root
-tf-install-vscode: ##@@tf install vscode inside docker container (not working in docker-targets)
-tf-install-vscode:
-	@ \
-	 apt-get update; \
-	 apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
-	 apt install -y libasound2 git; \
-	 apt install -y python3-tk pylint; \
-	 wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | apt-key add -; \
-	 add-apt-repository -ru "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
-	 add-apt-repository -u "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
-	 apt install -y code;
+# tf-install-vscode: USER=root
+# tf-install-vscode: ##@@tf install vscode inside docker container (not working in docker-targets)
+# tf-install-vscode:
+# 	@ \
+# 	 apt-get update; \
+# 	 apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
+# 	 apt install -y libasound2 git; \
+# 	 apt install -y python3-tk pylint; \
+# 	 wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | apt-key add -; \
+# 	 add-apt-repository -ru "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
+# 	 add-apt-repository -u "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"; \
+# 	 apt install -y code;
 
 
-tf-install-mdsplus: export PYTHONUSERBASE=/usr/local/lib/python3.6/dist-packages/
-tf-install-mdsplus: USER=root
-tf-install-mdsplus: ##@tf install mdsplus in container
-tf-install-mdsplus:
-	@ \
-	  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
-	  wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
-	  apt-key add mdsplus.gpg.key; \
-	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus stable"; \
-	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus stable"; \
-	  mkdir -p /usr/lib/python3.6/site-packages/; \
-	  apt install -y mdsplus mdsplus-python;
+# tf-install-mdsplus: export PYTHONUSERBASE=/usr/local/lib/python3.6/dist-packages/
+# tf-install-mdsplus: USER=root
+# tf-install-mdsplus: ##@tf install mdsplus in container
+# tf-install-mdsplus:
+# 	@ \
+# 	  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
+# 	  wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
+# 	  apt-key add mdsplus.gpg.key; \
+# 	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus stable"; \
+# 	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus stable"; \
+# 	  mkdir -p /usr/lib/python3.6/site-packages/; \
+# 	  apt install -y mdsplus mdsplus-python;
 
 
-tf-install-mdsplus-alpha: USER=root
-tf-install-mdsplus-alpha: ##@tf install mdsplus-alpha in container
-tf-install-mdsplus-alpha:
-	@ \
-	  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
-	  wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
-	  apt-key add mdsplus.gpg.key; \
-	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus alpha"; \
-	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus alpha"; \
-	  mkdir -p /usr/lib/python3.6/site-packages/; \
-	  apt install -y mdsplus-alpha mdsplus-alpha-python;
+# tf-install-mdsplus-alpha: USER=root
+# tf-install-mdsplus-alpha: ##@tf install mdsplus-alpha in container
+# tf-install-mdsplus-alpha:
+# 	@ \
+# 	  apt install -y gpg-agent software-properties-common apt-transport-https git wget libasound2 pylint; \
+# 	  wget http://www.mdsplus.org/dist/mdsplus.gpg.key; \
+# 	  apt-key add mdsplus.gpg.key; \
+# 	  add-apt-repository -ru "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus alpha"; \
+# 	  add-apt-repository -u "deb http://www.mdsplus.org/dist/Ubuntu16/repo MDSplus alpha"; \
+# 	  mkdir -p /usr/lib/python3.6/site-packages/; \
+# 	  apt install -y mdsplus-alpha mdsplus-alpha-python;
 
 

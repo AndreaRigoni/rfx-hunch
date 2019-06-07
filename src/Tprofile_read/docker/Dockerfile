@@ -47,6 +47,9 @@ RUN pip3 install seaborn
 # statmodels
 RUN pip3 install -U statsmodels
 
+
+RUN apt install -y jupyter ipython
+
 # make Jupyter able save to pdf
-RUN apt install -y pandoc pandoc-citeproc pandoc-data texlive-xetex
+# RUN apt install -y pandoc pandoc-citeproc pandoc-data texlive-xetex
 

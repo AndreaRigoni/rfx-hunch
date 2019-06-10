@@ -15,14 +15,12 @@ import matplotlib.colors as colors
 
 class Dummy_g1data():
 
-
     kinds = [
         {'mean': [0.2,0.8], 'sigma': [0.1,0.1], 'gain': [1,1] },        
         {'mean': [0.8], 'sigma': [0.1], 'gain': [0.5] },
         {'mean': [0.2], 'sigma': [0.1], 'gain': [0.5] },
         {'mean': [0.5], 'sigma': [0.2], 'gain': [1] },
         {'mean': [0.5], 'sigma': [0.2], 'gain': [0.5] },
-
     ]
 
     def __init__(self, counts=20, size=20, noise_var=0.):

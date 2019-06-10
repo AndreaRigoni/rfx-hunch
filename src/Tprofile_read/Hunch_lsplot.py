@@ -43,7 +43,7 @@ class LSPlot():
 
 class LSPlotBokeh(LSPlot):
     import numpy as np
-    from bokeh.io import show, output_file, output_notebook
+    from bokeh.io import show, output_notebook    
     from bokeh import events
     from bokeh.models import CustomJS, Div, Button, Slider
     from bokeh.models import CustomJS, ColumnDataSource, Slider, TextInput    
@@ -62,6 +62,7 @@ class LSPlotBokeh(LSPlot):
         events.PanStart, events.PanEnd, events.PinchStart, events.PinchEnd,
     ]
 
+    
 
     def __init__(self, *argv, **argd):
         super(LSPlotBokeh,self).__init__(*argv,**argd)
@@ -97,6 +98,13 @@ class LSPlotBokeh(LSPlot):
             doc.add_root(self._layout)
         LSPlotBokeh.show(plot, notebook_url=notebook_url)
 
+    # def html(self, filename=None):
+    #     from bokeh.io import save, output_file
+    #     if filename is None:
+    #         raise ValueError("filename must be provided")
+    #     output_file(filename)
+    #     save(self._layout)
+
     def set_data(self, data, counts=200):
         super(LSPlotBokeh, self).set_data(data)
         md = self._model
@@ -104,7 +112,7 @@ class LSPlotBokeh(LSPlot):
         self._cold = []
         if isinstance(ds, Dummy_g1data.Dummy_g1data):
             # from bokeh.palettes import Category10
-            # import itertools            
+            # import itertools
             # colors = itertools.cycle(Category10[10])
             dx = 1/ds._size
             x = np.linspace(0+dx/2,1-dx/2,ds._size)  # spaced x axis
@@ -113,7 +121,7 @@ class LSPlotBokeh(LSPlot):
                 self._cold.append( LSPlotBokeh.ColumnDataSource(data=dict(x=xy[:,0],y=xy[:,1]))  )
                 self._figure_gn.line('x','y',source=self._cold[i], line_width=3, line_alpha=0.6, color='red')
 
-        ds = self._data.ds_array.prefetch(counts).batch(counts)        
+        ds = self._data.ds_array.prefetch(counts).batch(counts)
         ts,_ = ds.make_one_shot_iterator().get_next()
         if md.latent_dim == 2:
             m,v = md.encode(ts)

@@ -33,6 +33,8 @@ import ipysh
 """
 
 class AEFIT(tf.keras.Model):
+    ''' General Autoencoder Fit Model for TF 2.0
+    '''
 
     def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None):
         super(AEFIT, self).__init__()

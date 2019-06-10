@@ -9,3 +9,24 @@ Makefile.in
 /build/download
 /build/conf/node_modules
 /build
+*.pyc
+
+src/Tprofile_read/jpnb/scipy_CBK/.ipynb_checkpoints/Kwarg optimization wrapper-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/bokeh_server_example-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/cvae-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/lsplot-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/plot_compare_gpr_krr-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/plot_kernel_ridge_regression-checkpoint.ipynb
+src/Tprofile_read/jpnb/.ipynb_checkpoints/plot_robust_fit-checkpoint.ipynb
+src/Tprofile_read/jpnb/scipy_CBK/.ipynb_checkpoints/FittingData-checkpoint.ipynb
+src/Tprofile_read/jpnb/scipy_CBK/.ipynb_checkpoints/bundle_adjustment-checkpoint.ipynb
+src/Tprofile_read/jpnb/scipy_CBK/.ipynb_checkpoints/robust_regression-checkpoint.ipynb
+conf/m4/ltsugar.m4
+conf/m4/libtool.m4
+conf/m4/ltoptions.m4
+conf/m4/ltversion.m4
+conf/m4/lt~obsolete.m4
+
+*.orig
+conf/ltmain.sh
+

@@ -428,6 +428,17 @@ class QSH_Dataset():
             el[el==self._null] = s_out
         self._null = s_out    
 
+    # def set_missing_as_neighbor(self, datasets=None):
+    #     if datasets is None:
+    #         datasets = ['prel', 'rho', 'te']
+    #     for i in range(len(self)):
+    #         for ds in datasets:
+    #             el = self[ds][i]
+    #             for j,el_j in enumerate(el):
+    #                 for k in range(0,len(el)-1):
+    #                     if el[k] != self._null:
+                                    
+
     null = property(get_null,set_null)
 
     def rebalance_prel(self, n_clusters=20):
@@ -466,6 +477,9 @@ class QSH_Dataset():
             mv_mask[ds] = indicator.fit_transform(el)
         return mv_mask
 
+
+
+
     def get_tf_dataset(self):
         types = np.float, np.float, np.bool
         shape = ((20,),(20,),(20,),)
@@ -480,15 +494,22 @@ class QSH_Dataset():
                     return
         return tf.data.Dataset.from_generator(gen, types, shape)
 
+    def get_tf_dataset_array(self):
+        types = tf.float32, tf.int32
+        shape = (2*self.dim,),(self.dim)
+        def gen():
+            import itertools
+            for i in itertools.count(0):
+                if i < len(self):
+                    qsh = self[i]
+                    act = np.isfinite(qsh.prel)
+                    yield np.concatenate([qsh.prel, qsh.te]), act
+                else:
+                    return
+        return tf.data.Dataset.from_generator(gen, types, shape)
 
-
-
-
-
-
-
-
-
+    ds_tuple = property(get_tf_dataset)
+    ds_array = property(get_tf_dataset_array)
 
 
 
@@ -517,7 +538,7 @@ def main():
     tsne.random = 42
     
     clst = Clustering()
-    # clst.n_clusters = 5
+    clst.n_clusters = 5
 
     Y = tsne.draw((qsh['te'][0:1000],qsh['tcentro'][0:1000]))
     L = clst(Y)

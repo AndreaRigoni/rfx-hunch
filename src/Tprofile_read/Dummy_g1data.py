@@ -23,12 +23,24 @@ class Dummy_g1data():
         {'mean': [0.5], 'sigma': [0.2], 'gain': [0.5] },
     ]
 
-    def __init__(self, counts=20, size=20, noise_var=0.):
+    def __init__(self, counts=20, size=20, noise_var=0., nanmask=None):
         self._counts = counts
         self._size = size
         self._noise = noise_var
+        if nanmask is None:
+            self._nanmask = None
+        else:
+            self._nanmask = np.array(nanmask)
     
     def __len__(self):
+        return self._counts
+
+    @property
+    def dim(self):
+        return self._size
+
+    @property
+    def size(self):
         return self._counts
 
     def gen_pt(self, id, x=None, kind=None):
@@ -45,7 +57,11 @@ class Dummy_g1data():
                 y += gauss(x,m,s,g)
         else:
             y = gauss(x,k['mean'],k['sigma'],k['gain'])
+        if self._nanmask is not None:
+            x[self._nanmask > 0] = np.nan
+            y[self._nanmask > 0] = np.nan
         return np.stack([x,y], axis=1), kind
+    
     
     def get_tf_dataset_tuple(self):
         types = tf.float32, tf.float32, tf.int32
@@ -75,6 +91,10 @@ class Dummy_g1data():
         
     ds_tuple = property(get_tf_dataset_tuple)
     ds_array = property(get_tf_dataset_array)
+
+
+
+
 
 
 

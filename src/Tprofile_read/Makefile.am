@@ -80,7 +80,7 @@ te_db_1.npy: create_db_1.py | pip-install
 
 
 DOCKER_TARGETS += runpy
-PYSCRIPTS = jpnb/STEP2_aefit.py
+PYSCRIPTS = examples/AEFIT_dummy.py
 runpy: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
 runpy: DOCKER_CONTAINER = tf-build
 runpy: $(NAME) $(PYSCRIPTS) te_db_1.npy | pip-install

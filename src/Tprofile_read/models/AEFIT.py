@@ -198,6 +198,10 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
                     # plt.pause(0.001)
 
 
+
+
+
+
 def plot_supervised_latent_distributions(model, counts=10000):
     import Dummy_g1data as g1
     dc = g1.Dummy_g1data(counts=counts, size=int(model.feature_dim/2), noise_var=0.)

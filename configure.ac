@@ -86,7 +86,7 @@ AC_CHECK_PROGS([PERL],[perl])
 
 ## LIBTOOL
 LT_INIT()
-
+ 
 ## /////////////////////////////////////////////////////////////////////////////
 ## //  KSCRIPTS  ///////////////////////////////////////////////////////////////
 ## /////////////////////////////////////////////////////////////////////////////
@@ -139,6 +139,16 @@ AX_GITIGNORE_ADD_PATH([${builddir}])
 AX_GITIGNORE_SUBST
 
 
+##
+## RPM
+##
+#     dnl For my rpm.m4 macros
+RPM_RELEASE=1
+AC_SUBST(RPM_RELEASE)
+
+AX_RPM_INIT
+AM_CONDITIONAL(MAKE_RPMS, test x$make_rpms = xtrue)
+
 
 
 AC_CONFIG_FILES( 
@@ -155,5 +165,6 @@ AC_CONFIG_FILES(
 				 ext/Makefile
 				 src/Makefile
 				 src/Tprofile_read/Makefile
+				 autoconf-bootstrap.spec
                )
 AC_OUTPUT

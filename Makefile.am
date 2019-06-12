@@ -23,12 +23,50 @@ include Common.mk
 AM_MAKEFLAGS = -j$(MAKE_PROCESS)
 ACLOCAL_AMFLAGS = -I conf/m4
 
-SUBDIRS = src
+SUBDIRS = conf/kconfig src ext doc
 
 all: ##@all all target
 all:
 
 clean-local:
 
-MOSTLYCLEANFILES =
+DISTCLEANFILES = .config .config.old
 
+hello.log: ##@log write hello.log file
+hello.log:
+	@ echo "hello bootstrap" > $@
+
+
+print-hello: EXAMPLE_STRING_VAR = not set
+print-hello:
+	@ echo "this is the var: $(EXAMPLE_STRING_VAR)"
+
+
+# if MAKE_RPMS
+# rpm: @RPM_TARGET@
+# $(RPM_TARGET): $(DISTFILES)
+# 	${MAKE} dist
+# 	-mkdir -p $(RPM_DIR)/SRPMS
+# 	-mkdir -p `dirname $(RPM_TARGET)`
+# 	$(RPM_PROG) $(RPM_ARGS) $(RPM_TARBALL)
+# 	@echo Congratulations, $(RPM_TARGET) "(and friends)" should now exist.
+# else
+# endif
+
+docker-rpm-builder-install:
+	$(MAKE) -C ext $@
+
+rpm: ##@rpm build rpm for DOCKER_IMAGE
+rpm: DOCKER_IMAGE = alanfranz/docker-rpm-builder-configurations:centos-7
+rpm: docker-rpm-builder-install autoconf-bootstrap.spec dist
+	docker-rpm-builder dir $(DOCKER_IMAGE) . $(TMP)/
+	
+
+
+DOCKER_TARGETS = rpm-test
+rpm-test: ##@rpm test created rpm packages
+rpm-test: DOCKER_CONTAINER = rpm-test
+rpm-test: DOCKER_IMAGE = alanfranz/docker-rpm-builder-configurations:centos-7
+rpm-test: $(wildcard $(TMP)/$(build_cpu)/*.rpm)
+	rpm -qlp $^
+	rpm -Uvvvh --test $^

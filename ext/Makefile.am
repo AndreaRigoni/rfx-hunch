@@ -93,8 +93,8 @@ ext-%: %/Makefile
 all: TARGET = all
 all: $(EXT_MODULES)
 
-clean: TARGET = clean
-clean: ext-libjit
+# clean: TARGET = clean
+# clean: ext-libjit
 
 
 list: ##@ext list defined ext modules
@@ -148,6 +148,20 @@ $(call _ext_configure,mdsplus)
 
 
 
+
+
+# /////////////////////////////////////////////////////////////////////////// //
+# //  DOCKER RPM BUILDER  /////////////////////////////////////////////////// //
+# /////////////////////////////////////////////////////////////////////////// //
+
+DOWNLOADS += docker-rpm-builder
+docker-rpm-builder: ##@@rpm docker-rpm-builder download code
+docker_rpm_builder_URL = https://github.com/docker-rpm-builder/docker-rpm-builder.git
+docker_rpm_builder_BRANCH = 1.42
+
+docker-rpm-builder-install: ##@rpm install local docker-rpm-builder package
+docker-rpm-builder-install: | docker-rpm-builder
+	@ cd docker-rpm-builder; python2 setup.py install --user
 
 
 

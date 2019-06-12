@@ -110,11 +110,6 @@ class NaNRandomDense(tf.keras.layers.Layer):
         return tf.map_fn(lambda x: fn(x), X)
 
 
-
-
-
-
-
 def tf_nan_to_num(x, num=0.):
     return tf.where(tf.math.is_nan(x), tf.ones_like(x) * num, x)
 
@@ -149,6 +144,7 @@ class AEFIT(tf.keras.Model):
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim,)),
+            NaNRandomDense(feature_dim),
             tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
@@ -260,10 +256,11 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
 
     def fn(x):
         xr = tf.roll(x, shift=1, axis=0)            
-        # print(x)
         x = tf.where(tf.math.is_nan(x), xr, x)
-        # print(x)
-        # print("--------------------------------------")
+        xr = tf.roll(x, shift=1, axis=0)            
+        x = tf.where(tf.math.is_nan(x), xr, x)
+        xr = tf.roll(x, shift=1, axis=0)            
+        x = tf.where(tf.math.is_nan(x), xr, x)
         return x
 
     count = 0
@@ -323,9 +320,4 @@ def plot_supervised_latent_distributions(model, counts=10000):
         count += 1
         if count % 100 == 0:
             plt.pause(0.001)
-
-
-
-
-
-    pass
+    

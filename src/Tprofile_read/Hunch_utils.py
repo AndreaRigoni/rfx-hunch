@@ -395,12 +395,18 @@ class QSH_Dataset():
     def dim(self):
         return 20
 
-    def loadData_npy(self, file):
+    def load(self, file):
         try:
-            self._dataset = np.load( file )
-            self.clean_up()
+            self._dataset = np.load( file )            
         except:
             print("error loading np database")
+
+    def save(self, file):
+        try:            
+            np.save(file, self._dataset)
+        except:
+            print("error saving np database")
+
 
     def clean_array(self, a):
         if np.isnan(self._null) or np.isinf(self._null):
@@ -462,6 +468,16 @@ class QSH_Dataset():
             # el.rho[id] = rho_c
         return k
 
+    def set_normal_positive(self):
+        # assert self._null == np.nan
+        p_min = np.nanmin(self['prel'])
+        p_max = np.nanmax(self['prel'])
+        self['prel'] = (self['prel']-p_min)/(p_max-p_min)
+        t_min = np.nanmin(self['te'])
+        t_max = np.nanmax(self['te'])
+        self['te'] = (self['te']-t_min)/(t_max-t_min)
+        
+
     def missing_values_mask(self, datasets=None):
         from sklearn.impute import MissingIndicator
         indicator = MissingIndicator(missing_values=self.null)
@@ -508,6 +524,8 @@ class QSH_Dataset():
                     return
         return tf.data.Dataset.from_generator(gen, types, shape)
 
+
+
     ds_tuple = property(get_tf_dataset)
     ds_array = property(get_tf_dataset_array)
 
@@ -532,7 +550,7 @@ def main():
     print("tf  version: %s" % tf.__version__)
     # print("mds version: %s" % mds.__version__)
     qsh = QSH_Dataset()
-    qsh.loadData_npy('te_db_1.npy')
+    qsh.load('te_db_1.npy')
     
     tsne = tSNE()
     tsne.random = 42

@@ -1,0 +1,406 @@
+# envsyms - Defines MDSplus development environment variables
+#           used by setup.csh and setup.sh
+# Format:
+#
+#         varname value  [(>|<)delimiter]
+#
+#       If third parameter is >; then if varname is already defined
+#       append a semicolon and the value to the end of the definition.
+#
+
+
+
+
+
+
+#
+# Remote node name
+# To be remove and set as variable in client node
+#
+#SERVER_NODE  ${MDSIP_SERVER}
+SERVER_NODE  raserver::
+
+
+#
+# RFX Pulse files
+# Enginering Data Acquisition raw data Pulse file
+#
+rfx_path     	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t
+mhd_ac_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+mhd_bc_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+mhd_br_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+eda1_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+eda2_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+eda3_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+edam_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+edav_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+edag_path    	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+
+#
+# Diagnostic Post elaboration Pulse files and VMS reference pulse files
+#
+include ${MDSPLUS_DIR}/local/experimentsVersion
+include ${MDSPLUS_DIR}/local/experimentsVersionPath
+
+#
+# Diagnostic raw data acquisition Pulse file
+#
+
+dequ_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dflu_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dico28_raw_path ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dtsr_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dtse_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dssp_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dsxm_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dsfm_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+a_raw_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dbol_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dbot_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dedg_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dmwr_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dofl_raw_path 	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dpel_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dpfr_raw_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dsct_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dscv_raw_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dstc_raw_path  	${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dstcj_raw_path  ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dstcu_raw_path  ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dsxt_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dsxv_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dtof_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dccd_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dter_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+#disis_raw_path  ${SERVER_NODE}/shots/rfxdataraw2/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw2/~t >;
+disis_raw_path  ${SERVER_NODE}/shots/rfxdataraw2/~e~d000/~e~d~c00/~t >;
+
+#dgpi_raw_path   ${SERVER_NODE}/shots/rfxdataraw2/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw2/~t >;
+dgpi_raw_path   ${SERVER_NODE}/shots/rfxdataraw2/~e~d000/~e~d~c00/~t >;
+dgpi2_raw_path  ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dsxc_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+dmoss_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dftc_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+deso_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dnbi_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dnpa_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dli3_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+dirc_raw_path   ${SERVER_NODE}/shots/rfxdataraw2/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw2/models/~t\;roserver::/shots/rfxdataraw2/~t  >;
+
+dgpi2_raw_path   ${SERVER_NODE}/shots/rfxdataraw/~e~d000/~e~d~c00/~t\;${SERVER_NODE}/shots/rfxdataraw/models/~t\;roserver::/shots/rfxdataraw/~t  >;
+
+#
+# Pulse file VMS di diagnognostica ed EDA non piu' presenti nel nuovo RFX
+#
+
+gen_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+pol_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+rgm_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+tor_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsxtraw1_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsxtraw2_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dmwrraw_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dbotraw_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dnpa_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsil3_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dtst_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dtom_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsxd_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstca_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstch_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstchwjb_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstchwjs_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcindex_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcjwjb_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcjwjs_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstco_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcp_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcpwjb_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcpwjs_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstct_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstctwjb_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstctwjs_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcuwjb_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dstcuwjs_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsil1_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dsil3_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dpsi_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dnym_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dnsp_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dmrl_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dirc_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dird_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+dico21_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+analysis_path 	${SERVER_NODE}/shots/rfxdatavms/~e~d000/~e~d~c00/~t >;
+
+
+# UID path
+#
+XAPPLRESDIR ${MDSPLUS_DIR} <:
+
+#
+# IDL path
+#
+IDL_PATH \+${MDSPLUS_DIR}/idl:/usr/local/rfxlibs/idl <:
+
+#
+# LIBRARY path
+#
+LD_LIBRARY_PATH /usr/local/rfxlibs/lib64:/usr/local/rfx/data_acquisition/lib64 <:
+
+#
+# PATH
+#
+PATH ${JDK_ROOT}/bin:/home/mdsplus/scripts:/usr/local/rfx/data_acquisition/scripts/rfxVersioning <:
+#
+# Java CLASSPATH
+#
+CLASSPATH  :.:/usr/local/jScheduler:${MDSPLUS_DIR}/java/classes/MindTerm.jar:${MDSPLUS_DIR}/java/classes/jTraverser.jar:${MDSPLUS_DIR}/java/classes/jDispatcher.jar:${MDSPLUS_DIR}/java/classes/jScope.jar
+# PATH
+#
+
+#
+# PRIVATE PULSE FILE
+#
+t2_path         ${SERVER_NODE}/common/areat2r/pulsefiles >;
+tpe_path	       150.178.3.80:: >;
+tperx_path      ${SERVER_NODE}/common/areagpi/tperx >;
+rxgpi_path	    ${SERVER_NODE}/common/areagpi/tperx/rxgpi >;
+itertest_path   ${SERVER_NODE}/iter >;
+tortest_path	 ${SERVER_NODE}/shots/tortest >;
+mdsmoss_path    150.178.3.131::
+ions_path       raserver::/home/zaniol/trees/ions/
+egpi_path       /common/areagpi/egpi
+dscint_path	    roserver::/ricercatori/fa/trees/dscint
+qpc_bps_path    roserver::/ricercatori/se/QPC/trees
+qpc_tf_path    roserver::/ricercatori/se/QPC/QPC_TF/trees
+qpc_pf_path     roserver::/ricercatori/se/QPC/QPC_PF/trees
+gdc_path        ${SERVER_NODE}/common/areaparete/GDC_PULSE-FILES
+phantom_path    ${SERVER_NODE}/common/areagpi/phantom/
+ipp_probes_path ${SERVER_NODE}/common/areabatman/~t
+ipp_tc_trend_path ${SERVER_NODE}/common/areabatman/~t
+iter_tc_path ${SERVER_NODE}/common/areabatman/ipp_tc_iter/
+
+ggtree_path /common/areastrike/Tests\@IPP-BATMAN/Misure2014/thermocouples/\;/common/areastrike/Test\@LHD/Measurements/Thermocouples/
+
+
+#
+# MST PULSE FILE
+#
+mst_path             /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mst
+mraw_mag_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_mag
+mst_mag_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mag
+mraw_misc_path       /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_misc
+mst_misc_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/misc
+mraw_ops_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_ops
+mst_ops_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/ops
+mst_fir_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/fir
+mraw_ts_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_ts
+mst_ts_path          /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/ts
+mst_brems_path 	     /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/brems
+mraw_brems_path	     /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_brems
+mraw_tsmp_path       /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_tsmp
+mst_tsmp_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/tsmp
+sxr_mst_cal_path     /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/sxr_mst_cal
+mst_me_sxr_path      /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/me_sxr
+mst_nbi_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/nbi
+mraw_nbi_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_nbi
+mraw_nbi_ext_path    /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_nbi_ext
+mst_rf_path          /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/rf  
+mst_rf_ext_path      /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/rf_ext  
+mraw_rf_path         /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/mraw_rf  
+mst_v3fit_path       /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/v3fit 
+mst_xray_path        /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/xray
+sxr_tomo_acq_path    /common/areamst/pulsefiles\;/common/areamst/pulsefiles/~j~i~h/~g~f/~e~d/sxr_tomo_acq
+
+
+
+#hvptf_path ${SERVER_NODE}/common/areaHVPTF/~t
+hvptf_path ${SERVER_NODE}/common/areaHVPTF/~t/20~j~i
+
+disis_bp_path	/scratch/zuin/trees
+xsim_path /scratch/cavazzana/trees
+
+#
+# Gestione delle versioni
+#
+vertree_path /home/mdsplus/taliercio/trees/verTree/
+testver_raw_path /home/mdsplus/taliercio/rfxVersion/trees/ver_active
+
+
+rfx_run_path	roserver::/datarun\;/shots/datarun/treerun/~t\;/shots/datarun/treedate/~h~g~f~e/~t
+dli3_run_path	roserver::/datarun\;/shots/datarun/treerun/~t\;/shots/datarun/treedate/~h~g~f~e/~t
+lisa_path	    roserver::/datarun/subtree/~t\;/shots/datarun/treedate/~h~g~f~e/~t
+
+
+
+#
+# Pulse file SPIDER
+#
+
+SPIDER_SERVER_NODE  soserver.nbtf::
+SPIDER_ARCHIVE_NODE saserver.nbtf::
+
+#spider_path ${SPIDER_SERVER_NODE}//shots/spider/~t\;soserver.nbtf::/shots/spidata/spider >;
+#iseps_path  ${SPIDER_SERVER_NODE}//shots/spider/~t\;soserver.nbtf::/shots/spidata/iseps >;
+
+
+#SPIDER raw Pulse file Device Acquisition
+spider_path      ${SPIDER_SERVER_NODE}/shots/spidataraw/spider\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+diag_img_path    ${SPIDER_SERVER_NODE}/shots/spidataraw/diag_img\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+iseps_path       ${SPIDER_SERVER_NODE}/shots/spidataraw/iseps\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+agps_path        ${SPIDER_SERVER_NODE}/shots/spidataraw/agps\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+gvs_path         ${SPIDER_SERVER_NODE}/shots/spidataraw/gvs\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+cooling_path     ${SPIDER_SERVER_NODE}/shots/spidataraw/cooling\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+inject_path      ${SPIDER_SERVER_NODE}/shots/spidataraw/inject\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+spectro_path     ${SPIDER_SERVER_NODE}/shots/spidataraw/spectro\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+el_probe_path    ${SPIDER_SERVER_NODE}/shots/spidataraw/el_probe\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+source_tc_path   ${SPIDER_SERVER_NODE}/shots/spidataraw/source_tc\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+beamdump_tc_path ${SPIDER_SERVER_NODE}/shots/spidataraw/beamdump_tc\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+fastcam_path     ${SPIDER_SERVER_NODE}/shots/spidataraw/fastcam\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+
+#SPIDER raw shot trend Pulse file 
+spider_tshot_path ${SPIDER_SERVER_NODE}/shots/spidataraw/spider_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+iseps_tshot_path  ${SPIDER_SERVER_NODE}/shots/spidataraw/iseps_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+agps_tshot_path   ${SPIDER_SERVER_NODE}/shots/spidataraw/agps_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+ik_tshot_path     ${SPIDER_SERVER_NODE}/shots/spidataraw/ik_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+inject_tshot_path ${SPIDER_SERVER_NODE}/shots/spidataraw/inject_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+gvs_tshot_path    ${SPIDER_SERVER_NODE}/shots/spidataraw/gvs_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+sico_tshot_path   ${SPIDER_SERVER_NODE}/shots/spidataraw/sico_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+sk_tshot_path     ${SPIDER_SERVER_NODE}/shots/spidataraw/sk_tshot\;saserver.nbtf::/shots/spidataraw/~f~e~d000/~f~e~d~c00/~t/ver_active
+
+#SPIDER Analysis Data Pulse file
+spider_a_path      ${SPIDER_SERVER_NODE}/shots/spidataanalysis/spider_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+diag_img_a_path    ${SPIDER_SERVER_NODE}/shots/spidataanalysis/diag_img_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+iseps_a_path       ${SPIDER_SERVER_NODE}/shots/spidataanalysis/iseps_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+agps_a_path        ${SPIDER_SERVER_NODE}/shots/spidataanalysis/agps_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+gvs_a_path         ${SPIDER_SERVER_NODE}/shots/spidataanalysis/gvs_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+cooling_a_path     ${SPIDER_SERVER_NODE}/shots/spidataanalysis/cooling_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+inject_a_path      ${SPIDER_SERVER_NODE}/shots/spidataanalysis/inject_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+spectro_a_path     ${SPIDER_SERVER_NODE}/shots/spidataanalysis/spectro_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+el_probe_a_path    ${SPIDER_SERVER_NODE}/shots/spidataanalysis/el_probe_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+source_tc_a_path   ${SPIDER_SERVER_NODE}/shots/spidataanalysis/source_tc_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+beamd_tc_a_path    ${SPIDER_SERVER_NODE}/shots/spidataanalysis/beamd_tc_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+fastcam_a_path     ${SPIDER_SERVER_NODE}/shots/spidataanalysis/fastcam_a\;saserver.nbtf::/shots/spidataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active
+
+
+#SPIDER Trend Pulse file
+spider_trend_path ${SPIDER_SERVER_NODE}/shots/spidatatrend/spider_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+iseps_trend_path  ${SPIDER_SERVER_NODE}/shots/spidatatrend/iseps_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+agps_trend_path   ${SPIDER_SERVER_NODE}/shots/spidatatrend/agps_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+ik_trend_path     ${SPIDER_SERVER_NODE}/shots/spidatatrend/ik_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+inject_trend_path ${SPIDER_SERVER_NODE}/shots/spidatatrend/inject_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+gvs_trend_path    ${SPIDER_SERVER_NODE}/shots/spidatatrend/gvs_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+sico_trend_path   ${SPIDER_SERVER_NODE}/shots/spidatatrend/sico_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+sk_trend_path     ${SPIDER_SERVER_NODE}/shots/spidatatrend/sk_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+sitp_trend_path   ${SPIDER_SERVER_NODE}/shots/spidatatrend/sitp_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+sptl_trend_path   ${SPIDER_SERVER_NODE}/shots/spidatatrend/sptl_trend\;saserver.nbtf::/shots/spidatatrend/~h~g~f~e/~d~c/~t/ver_active
+
+
+# Cotb test Pulse File
+cotb_path        ${SPIDER_ARCHIVE_NODE}/shots/cotbdataraw/~j~i~h~g/~f~e/~t/ver_active\;${SERVER_ARCHIVE_NODE}/shots/cotbdataraw/~f~e~d000/~f~e~d~c00/~t/ver_active\;${SPIDER_SERVER_NODE}/shots/cotbdataraw/~t
+cotb_trend_path   ${SPIDER_ARCHIVE_NODE}/shots/cotbdatatrend/~h~g~f~e/~d~c/~t/ver_active\;${SERVER_ARCHIVE_NODE}/shots/cotbdatatrend/~t\;${SPIDER_ARCHIVE_NODE}/shots/cotbdatatrend/~j~i~h~g/~f~e/~t/ver_active\;${SPIDER_SERVER_NODE}/shots/cotbdatatrend/~t
+cotb_a_path        ${SPIDER_ARCHIVE_NODE}/shots/cotbdataanalysis/~j~i~h~g/~f~e/~t/ver_active\;${SERVER_ARCHIVE_NODE}/shots/cotbdataanalysis/~f~e~d000/~f~e~d~c00/~t/ver_active\;soserver::/shots/cotbdataanalysis/~t
+cotb_tr_a_path   ${SPIDER_ARCHIVE_NODE}/shots/cotbdatatranalysis/~h~g~f~e/~d~c/~t/ver_active\;${SPIDER_SERVER_NODE}/shots/cotbtdatatranalysis/~t
+
+
+
+# Trasmission Line Acceptance test Pulse File
+tl_spider_path   ${SPIDER_SERVER_NODE}/shots/spidatatrend/tl_spider
+tl_iseps_tr_path ${SPIDER_SERVER_NODE}/shots/spidatatrend/tl_spider
+
+# SAT Spider Central Codas Pulse File
+performance_path ${SPIDER_SERVER_NODE}/shots/spidatatest/performance
+sat_pulse_path   ${SPIDER_SERVER_NODE}/shots/spidatatest/sat_pulse
+pu_001_path      ${SPIDER_SERVER_NODE}/shots/spidatatest/pu_001
+pu_002_path      ${SPIDER_SERVER_NODE}/shots/spidatatest/pu_002
+pu_003_path      ${SPIDER_SERVER_NODE}/shots/spidatatest/pu_003
+pu_004_path      ${SPIDER_SERVER_NODE}/shots/spidatatest/pu_004
+sat_ptrend_path  ${SPIDER_SERVER_NODE}/shots/spidatatest/sat_ptrend
+sat_mds_path     ${SPIDER_SERVER_NODE}/shots/spidatatest/sat_mds
+
+
+#
+# Test and diagnostic trees
+#
+
+#test_path roserver::/home/mdsplus/taliercio/trees/test/
+test_path /home/mdsplus/trees
+anton_path /home/mdsplus/trees
+inspire_path /home/mdsplus/trees
+hts_path /home/mdsplus/trees
+falcon_fast_path /home/mdsplus/trees
+dequ_t_path roserver::/shots/rfxdataraw/tests/dequ_test
+dequ_raw_t_path roserver::/shots/rfxdataraw/tests/dequ_test
+dflu_t_path roserver::/shots/rfxdataraw/tests/dflu_test
+dflu_traw_path roserver::/shots/rfxdataraw/tests/dflu_test
+mhd_br_t_path roserver::/shots/rfxdataraw/tests/mhd_br_test
+itertest_path raserver2::/iter
+test_pr_path roserver::/home/mdsplus/taliercio/AcqPR
+dpel_t_path     roserver::/ricercatori/fc/pellet/trees
+dpel_raw_t_path roserver::/ricercatori/fc/pellet/trees
+edav_t_path roserver::/ricercatori/ip/testValvoleVI/trees
+dsxt_t_path roserver::/ricercatori/fd/tomopulse/trees
+dsxt_t_raw_path roserver::/ricercatori/fd/tomopulse/trees
+dbot_t_path roserver::/ricercatori/fd/tomopulse/trees
+dbot_t_raw_path roserver::/ricercatori/fd/tomopulse/trees
+dsxc_t_path roserver::/ricercatori/fd/dsxcpulse/trees
+dsxc_t_raw_path roserver::/ricercatori/fd/dsxcpulse/trees
+dccd_t_path roserver::/home/mdsplus/taliercio/trees/dccd_t
+dccd_t_raw_path roserver::/home/mdsplus/taliercio/trees/dccd_t
+dstc_t_path roserver::/home/mdsplus/taliercio/telecamere/trees
+dstc_t_raw_path roserver::/home/mdsplus/taliercio/telecamere/trees
+
+dnbi_t_path roserver::/ricercatori/fa/dnbi/trees
+dnbi_t_raw_path roserver::/ricercatori/fa/dnbi/trees
+
+raptortree_path /home/mdsplus/trees
+exchangeon_path /home/mdsplus/trees
+
+
+#NIO1 pulse files
+
+nio1_path ${SERVER_NODE}/niotree/~t\;niolin3.rfx.local::/trees/~t
+ir_cam_path ${SERVER_NODE}/niotree/~t\;niolin3.rfx.local::/trees/~t
+lin_cam_path ${SERVER_NODE}/niotree/~t\;niolin3.rfx.local::/trees/~t
+oes_path ${SERVER_NODE}/niotree/~t
+
+
+alimtmp_path /scratch/ferro/QPC_prototype/Trees
+
+#MDSplus events
+UDP_EVENTS 1
+
+#MDSplus python
+PyLib python2.7
+
+UDP_EVENTS 1
+EQU_TOR_REF NEW
+
+############################################################
+#
+#   NEUTRAL BEANS INJECTOR PULSE FILE
+############################################################
+
+is_tc_path spild8.rfx.local::/usr/local/mdsplus/trees/~t
+
+#for test
+image_path /usr/local/mdsplus/trees
+big_tree_path /0/rfx/home/mdsplus/trees
+falcon_trend_path /0/rfx/home/mdsplus/trees
+pcs_path /0/rfx/home/mdsplus/trees
+redpitaya_path /0/rfx/home/mdsplus/trees
+
+
+
+
+

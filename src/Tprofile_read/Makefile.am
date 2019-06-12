@@ -19,9 +19,9 @@ PYTHONPATH = $(abs_top_builddir)/conf/python/site-packages/lib/python3.6/site-pa
 
 DOWNLOADS = tensorflow
 
-tensorflow: ##@tf download git tensorflow code (master)
-tensorflow_URL    = https://github.com/tensorflow/tensorflow.git
-tensorflow_BRANCH = master
+tensorflow_src: ##@tf download git tensorflow code (master)
+tensorflow_src_URL    = https://github.com/tensorflow/tensorflow.git
+tensorflow_src_BRANCH = master
 
 DOCKER_TARGETS = tf-%
 tf-%: DOCKER_CONTAINER = tf-build
@@ -32,21 +32,25 @@ tf-init: DOCKER_IMAGE = tf-devel-py3
 tf-init: DOCKER_URL = $(srcdir)/docker
 tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages
 tf-init: DOCKER_PORTS = 8888
-tf-init: pip-install | tensorflow 
-	@ cd tensorflow; 
+tf-init: pip-install | tensorflow_src
+	@ cd tensorflow_src; 
 
-DOCKER_TARGETS += pip-install
+
+
+PYTHON_PACKAGES += bokeh bokeh-metaplot sklearn
+# DOCKER_TARGETS += pip-install
 pip-install: DOCKER_CONTAINER = tf-build
 
-tensorflow/.tf_configure.bazelrc: | tf-init
-	@ cd tensorflow; ./configure
+
+tensorflow_src/.tf_configure.bazelrc: | tf-init
+	@ cd tensorflow_src; ./configure
 
 tf-configure: ##@tf reconfigure src code project
-tf-configure: tensorflow/.tf_configure.bazelrc
+tf-configure: tensorflow_src/.tf_configure.bazelrc
 
 tf-build: ##@tf build tensorflow code (not needed)
 tf-build: tf-configure | tf-init
-	@ cd tensorflow; bazel build --config=opt //tensorflow/tools/pip_package:build_pip_package
+	@ cd tensorflow_src; bazel build --config=opt //tensorflow_src/tools/pip_package:build_pip_package
 
 tf-shell: ##@tf enter container with shell (bash)
 tf-shell: tf-init
@@ -64,11 +68,14 @@ export abs_srcdir
 export abs_builddir
 export rfx_ver = inProgress
 
-
 # automatically reload the following files (this works only if 'ipysh' has been imported too)
 export IPY_AIMPORT = Hunch_utils \
 					 Hunch_lsplot \
-					 models.AEFIT models.SPFIT \
+					 models.AEFIT \
+					 models.AEFIT_v1 \
+					 models.AEFIT0 \
+					 models.AEFIT1 \
+					 models.SPFIT \
 					 Dummy_g1data
 
 
@@ -86,7 +93,6 @@ runpy: DOCKER_CONTAINER = tf-build
 runpy: $(NAME) $(PYSCRIPTS) te_db_1.npy | pip-install
 	@ ipython -i $< $(ARGS)
 
-
 DOCKER_TARGETS += jupyter
 jupyter: DOCKER_CONTAINER = tf-build
 jupyter: ##@jp start jupyter server on jpnb $(srcdir) folder
@@ -101,10 +107,39 @@ rdipietro_DIR = $(srcdir)/jpnb/rdipietro
 
 
 
+## .########.########....##..
+## ....##....##........####..
+## ....##....##..........##..
+## ....##....######......##..
+## ....##....##..........##..
+## ....##....##..........##..
+## ....##....##........######
+
+DOCKER_TARGETS += tf1-%
+tf1-%: DOCKER_CONTAINER = tf1-stable
 
 
+#IMAGE: tensorflow/tensorflow:nightly-devel-py3
+tf1-init: ##@tf build process
+tf1-init: DOCKER_IMAGE = tf-stable-py3
+tf1-init: DOCKER_URL = $(srcdir)/docker_v1
+tf1-init: DOCKER_MOUNTS = dist-packages-v1:/usr/local/lib/python3.5/dist-packages
+# tf1-init: DOCKER_PORTS = 8888
+tf1-init: 
+	@ :; 
+
+tf1-shell: ##@tf enter container with shell (bash)
+tf1-shell: tf1-init
+	@ bash -l
 
 
+runpy_v1 tf1-%: PYTHONPATH = $(abs_srcdir)
+
+DOCKER_TARGETS += runpy_v1
+runpy_v1: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
+runpy_v1: DOCKER_CONTAINER = tf1-stable
+runpy_v1: $(NAME) examples/AEFIT_dummy_v1.py te_db_1.npy | pip-install
+	@ ipython3 -i $< $(ARGS)
 
 
 ##   .########..########.########..########..########..######.....###....########.########.########.

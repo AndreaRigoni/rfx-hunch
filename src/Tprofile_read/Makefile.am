@@ -31,14 +31,14 @@ tf-init: ##@tf build process
 tf-init: DOCKER_IMAGE = tf-devel-py3
 tf-init: DOCKER_URL = $(srcdir)/docker
 tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages
-tf-init: DOCKER_PORTS = 8888
+tf-init: DOCKER_PORTS = 8888:8888
 tf-init: pip-install | tensorflow_src
-	@ cd tensorflow_src; 
+	@ :; 
 
 
 
 PYTHON_PACKAGES += bokeh bokeh-metaplot sklearn
-# DOCKER_TARGETS += pip-install
+DOCKER_TARGETS += pip-install
 pip-install: DOCKER_CONTAINER = tf-build
 
 
@@ -115,31 +115,31 @@ rdipietro_DIR = $(srcdir)/jpnb/rdipietro
 ## ....##....##..........##..
 ## ....##....##........######
 
-DOCKER_TARGETS += tf1-%
-tf1-%: DOCKER_CONTAINER = tf1-stable
+# DOCKER_TARGETS += tf1-%
+# tf1-%: DOCKER_CONTAINER = tf1-stable
 
 
-#IMAGE: tensorflow/tensorflow:nightly-devel-py3
-tf1-init: ##@tf build process
-tf1-init: DOCKER_IMAGE = tf-stable-py3
-tf1-init: DOCKER_URL = $(srcdir)/docker_v1
-tf1-init: DOCKER_MOUNTS = dist-packages-v1:/usr/local/lib/python3.5/dist-packages
-# tf1-init: DOCKER_PORTS = 8888
-tf1-init: 
-	@ :; 
+# #IMAGE: tensorflow/tensorflow:nightly-devel-py3
+# tf1-init: ##@tf build process
+# tf1-init: DOCKER_IMAGE = tf-stable-py3
+# tf1-init: DOCKER_URL = $(srcdir)/docker_v1
+# tf1-init: DOCKER_MOUNTS = dist-packages-v1:/usr/local/lib/python3.5/dist-packages
+# # tf1-init: DOCKER_PORTS = 8888
+# tf1-init: 
+# 	@ :; 
 
-tf1-shell: ##@tf enter container with shell (bash)
-tf1-shell: tf1-init
-	@ bash -l
+# tf1-shell: ##@tf enter container with shell (bash)
+# tf1-shell: tf1-init
+# 	@ bash -l
 
 
-runpy_v1 tf1-%: PYTHONPATH = $(abs_srcdir)
+# runpy_v1 tf1-%: PYTHONPATH = $(abs_srcdir)
 
-DOCKER_TARGETS += runpy_v1
-runpy_v1: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
-runpy_v1: DOCKER_CONTAINER = tf1-stable
-runpy_v1: $(NAME) examples/AEFIT_dummy_v1.py te_db_1.npy | pip-install
-	@ ipython3 -i $< $(ARGS)
+# DOCKER_TARGETS += runpy_v1
+# runpy_v1: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
+# runpy_v1: DOCKER_CONTAINER = tf1-stable
+# runpy_v1: $(NAME) examples/AEFIT_dummy_v1.py te_db_1.npy | pip-install
+# 	@ ipython3 -i $< $(ARGS)
 
 
 ##   .########..########.########..########..########..######.....###....########.########.########.

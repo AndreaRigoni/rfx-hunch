@@ -30,6 +30,8 @@ else:
     qsh.rebalance_prel()
     qsh.save('te_db_2.npy')
 
+qsh.set_normal_positive()
+
 m = aefit.AEFIT(latent_dim=2)
 
 # aefit.test_dummy(m)

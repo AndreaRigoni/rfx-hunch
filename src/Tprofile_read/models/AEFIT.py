@@ -36,15 +36,18 @@ class AEFIT(tf.keras.Model):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
 
-    def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None):
+    def __init__(self, feature_dim=40, latent_dim=2):
         super(AEFIT, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
+        self.dprate = 0.2
         self.set_model()
         
-    def set_model(self):
+    def set_model(self, training=True):
         feature_dim = self.feature_dim
         latent_dim = self.latent_dim
+        if training: dprate = self.dprate
+        else: dprate = 0.
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential(
             [
@@ -52,7 +55,9 @@ class AEFIT(tf.keras.Model):
 
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
+            #tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            #tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(2*latent_dim),
             ]
@@ -64,7 +69,9 @@ class AEFIT(tf.keras.Model):
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
+            #tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            #tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(units=feature_dim),
         ]
         )
@@ -132,10 +139,6 @@ def compute_gradients(model, x):
 def apply_gradients(optimizer, gradients, variables):
     optimizer.apply_gradients(zip(gradients, variables))
 
-def vae_log_normal_pdf(sample, mean, logvar, raxis=1):
-    log2pi = tf.math.log(2. * np.pi)
-    return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
-
 
 
 
@@ -152,15 +155,6 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
     if data is None:
         data = g1.Dummy_g1data(counts=counts, size=int(model.feature_dim/2), noise_var=0.)
     ts,ls = data.ds_array.batch(batch).make_one_shot_iterator().get_next()
-    #ts = model.reparameterize(*model.encode(ts))    
-    #
-    # sample from random
-    # ts = tf.random.normal(shape=(batch, model.latent_dim))
-    #
-    # sample from base
-    #ts = tf.eye(model.latent_dim)
-
-    kmeans = KMeans(n_clusters=model.latent_dim, random_state=0)
 
     count = 0
     optimizer = tf.keras.optimizers.Adam(loss_factor)
@@ -186,7 +180,6 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
                     # plt.plot(v[:,0],v[:,1],'.')
                     
                     ax2.clear()                    
-                    # for i in range(model.latent_dim):
                     for i in range(batch):
                         # sns.scatterplot(X[i],Y[i])
                         ax2.plot(X[i],Y[i],'.')
@@ -196,9 +189,6 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
                 #     # sns.scatterplot(x[0],y[0])
                     fig.canvas.draw()
                     # plt.pause(0.001)
-
-
-
 
 
 
@@ -220,8 +210,3 @@ def plot_supervised_latent_distributions(model, counts=10000):
         if count % 100 == 0:
             plt.pause(0.001)
 
-
-
-
-
-    pass

@@ -360,9 +360,11 @@ class QSH(Struct):
 
 class QSH_Dataset():
                 
-    def __init__(self):
+    def __init__(self, dim=20):
         self._dataset = None
         self._range   = None
+        self._dim     = dim
+        self._balance = 0
         self._null    = -1
 
     # return by reference
@@ -391,9 +393,18 @@ class QSH_Dataset():
     def __len__(self):
         return len(self._dataset)
             
-    @property
-    def dim(self):
-        return 20
+    def get_dim(self):
+        return self._dim
+
+    def set_dim(self, dim):
+        self._dim = dim
+        if self.is_balanced and self._balance != dim:
+            self.rebalance_prel(dim)
+
+    def is_balanced(self):
+        return self._balance != 0
+
+    dim = property(get_dim,set_dim)
 
     def load(self, file):
         try:
@@ -407,7 +418,6 @@ class QSH_Dataset():
         except:
             print("error saving np database")
 
-
     def clean_array(self, a):
         if np.isnan(self._null) or np.isinf(self._null):
             return a[np.isfinite(a)]
@@ -416,7 +426,7 @@ class QSH_Dataset():
 
     def clean_up_poorcurves(self, count=1):
         def count_valid(data):
-            return len([i for i in data if i != -1])
+            return len([i for i in data if not self.is_null(i) ])
         cleandata = []
         for i in self._dataset:
             if count_valid(i['prel']) > count:
@@ -434,24 +444,23 @@ class QSH_Dataset():
             el[el==self._null] = s_out
         self._null = s_out    
 
-    # def set_missing_as_neighbor(self, datasets=None):
-    #     if datasets is None:
-    #         datasets = ['prel', 'rho', 'te']
-    #     for i in range(len(self)):
-    #         for ds in datasets:
-    #             el = self[ds][i]
-    #             for j,el_j in enumerate(el):
-    #                 for k in range(0,len(el)-1):
-    #                     if el[k] != self._null:
-                                    
+    def is_null(self, x):
+        if np.isnan(self._null) or np.isinf(self._null):
+            return not np.isfinite(x)
+        else:
+            return x==self._null
+
 
     null = property(get_null,set_null)
 
+    def shuffle(self):
+        np.random.shuffle(self._dataset)
+
     def rebalance_prel(self, n_clusters=20):
-        from sklearn.cluster import KMeans    
+        from sklearn.cluster import KMeans            
         prel = self.clean_array(self.data['prel']).reshape(-1,1)
         k = KMeans(n_clusters=n_clusters, random_state=0)
-        k.fit(prel)
+        k.fit(prel)        
         idx = np.argsort(k.cluster_centers_.sum(axis=1))
         lut = np.zeros_like(idx)
         lut[idx] = np.arange(k.n_clusters)
@@ -466,7 +475,10 @@ class QSH_Dataset():
             el.te[id] = te_c
             # el.rho[:] = self.null
             # el.rho[id] = rho_c
+        self._is_balanced = True
+        self._dim = n_clusters
         return k
+
 
     def set_normal_positive(self):
         # assert self._null == np.nan
@@ -493,9 +505,6 @@ class QSH_Dataset():
             mv_mask[ds] = indicator.fit_transform(el)
         return mv_mask
 
-
-
-
     def get_tf_dataset(self):
         types = np.float, np.float, np.bool
         shape = ((20,),(20,),(20,),)
@@ -519,19 +528,35 @@ class QSH_Dataset():
                 if i < len(self):
                     qsh = self[i]
                     act = np.isfinite(qsh.prel)
-                    yield np.concatenate([qsh.prel, qsh.te]), act
+                    yield np.concatenate([qsh.prel[0:self.dim], qsh.te[0:self.dim]]), act[0:self.dim]
                 else:
                     return
         return tf.data.Dataset.from_generator(gen, types, shape)
+        
+
+    def plot_hisotgrams(self):
+        import seaborn as sns        
+        x = range(20)
+        def count_not_nan(xi):
+            y = tf.boolean_mask(xi, tf.math.is_finite(xi))
+            return len(y)
+        y = [ self['te'][:,i] for i in range(20) ]
+        Y = tf.map_fn(lambda xi: count_not_nan(xi), tf.convert_to_tensor(y), dtype=tf.int32 )
+        plt.figure('not nan histogram')
+        plt.clf()
+        plt.bar(x,Y)
+        
+        yh = [ len(y[np.isfinite(y)]) for y in self['te'] ]
+        plt.figure('not nan len distribution')
+        plt.clf()
+        sns.distplot(yh)
+        yh_max = np.max(yh)
+        print("this should be shriked to: ",yh_max)
 
 
 
     ds_tuple = property(get_tf_dataset)
     ds_array = property(get_tf_dataset_array)
-
-
-
-
 
 
 """
@@ -543,15 +568,14 @@ class QSH_Dataset():
 ...##.##......##.....##.##.....##..##..##...###
 ...##.##......##.....##.##.....##.####.##....##
 """
-if __name__ == '__main__':
-    main()
 
-def main():
+def tsne_analysis():
     print("tf  version: %s" % tf.__version__)
     # print("mds version: %s" % mds.__version__)
     qsh = QSH_Dataset()
     qsh.load('te_db_1.npy')
-    
+    qsh.shuffle()
+
     tsne = tSNE()
     tsne.random = 42
     
@@ -571,8 +595,10 @@ def main():
         te = qsh['te'][i]
         plt.plot(te,'-', color=cm(L[i]), linewidth=0.2) 
 
-
     plt.ion()
     plt.show()
 
 
+
+if __name__ == '__main__':
+    tsne_analysis()

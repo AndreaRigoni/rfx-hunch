@@ -42,7 +42,6 @@ class LSPlot():
 
 
 class LSPlotBokeh(LSPlot):
-    import numpy as np
     from bokeh.io import show, output_notebook    
     from bokeh import events
     from bokeh.models import CustomJS, Div, Button, Slider
@@ -67,7 +66,7 @@ class LSPlotBokeh(LSPlot):
     def __init__(self, *argv, **argd):
         super(LSPlotBokeh,self).__init__(*argv,**argd)
         self._figure_ls = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset,crosshair")
-        self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",y_range=(0,1))
+        self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
         self._div = LSPlotBokeh.Div(width=200, height=400, height_policy="fixed")
         self._layout = LSPlotBokeh.row(self._figure_ls,self._figure_gn, self._div)        
 
@@ -83,8 +82,9 @@ class LSPlotBokeh(LSPlot):
         self._inx.on_change('value',posx_cb)
         
         # LS PLOT
-        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
-        self._figure_ls.scatter('x','y',source=self._data_ls)
+        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],zx=[],zy=[]))
+        self._figure_ls.scatter('mx','my',source=self._data_ls)
+        self._figure_ls.scatter('zx','zy',source=self._data_ls,color='grey')
         for event in LSPlotBokeh.point_events:
             self._figure_ls.js_on_event(event, self.display_event(self._div, attributes=LSPlotBokeh.point_attributes))
 
@@ -125,8 +125,10 @@ class LSPlotBokeh(LSPlot):
         ts,_ = ds.make_one_shot_iterator().get_next()
         if md.latent_dim == 2:
             m,v = md.encode(ts)
-            # z = md.reparameterize(m,v)
-            data=dict( x=m[:,0].numpy().tolist(), y=m[:,1].numpy().tolist() )
+            z = md.reparameterize(m,v)
+            data=dict( mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
+                       vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
+                       zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
             self._data_ls.data = data
 
     def plot_generative(self, x, y):
@@ -157,7 +159,6 @@ class LSPlotBokeh(LSPlot):
                 lines.shift();
             div.text = lines.join("\\n");
         """ % (attributes, style))
-
 
 
 

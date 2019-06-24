@@ -23,14 +23,16 @@ class Dummy_g1data():
         {'mean': [0.5], 'sigma': [0.2], 'gain': [0.5] },
     ]
 
-    def __init__(self, counts=20, size=20, noise_var=0., nanmask=None):
+    def __init__(self, counts=20, size=20, noise_var=0., nanprob=None, nanmask=None, fixed_nanmask=None):
         self._counts = counts
         self._size = size
         self._noise = noise_var
-        if nanmask is None:
-            self._nanmask = None
-        else:
+        if nanmask is not None:
             self._nanmask = np.array(nanmask)
+        if nanprob is not None:
+            self._nanprob = np.array(nanprob)
+        if fixed_nanmask is not None:
+            self._fixed_nanmask = np.array(fixed_nanmask)
     
     def __len__(self):
         return self._counts
@@ -57,9 +59,19 @@ class Dummy_g1data():
                 y += gauss(x,m,s,g)
         else:
             y = gauss(x,k['mean'],k['sigma'],k['gain'])
-        if self._nanmask is not None:
-            x[self._nanmask > 0] = np.nan
-            y[self._nanmask > 0] = np.nan
+        
+        mask = np.ones_like(x)
+        if self._nanprob is not None:
+            mask = np.random.uniform(size=self._size)
+            mask = (mask < self._nanprob).astype(float)
+                    
+        # if self._nanmask is not None:
+        #     mask = self._nanmask & np.random.randint(2, size=self._size)
+        #     if self._fixed_nanmask is not None:
+        #         mask = mask | self._fixed_nanmask
+        
+        x[mask > 0] = np.nan
+        y[mask > 0] = np.nan
         return np.stack([x,y], axis=1), kind
     
     

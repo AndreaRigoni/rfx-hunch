@@ -53,25 +53,25 @@ class tSNE_PlotBokeh(SNEPlot):
     pan_attributes = point_attributes + ['delta_x', 'delta_y'] # Pan event
     pinch_attributes = point_attributes + ['scale']            # Pinch event
 
+    # events.Tap, events.DoubleTap, events.Press,
+    # events.PanStart, events.PanEnd, events.PinchStart, events.PinchEnd,
+    
     point_events = [
-        events.Tap, events.DoubleTap, events.Press,
         events.MouseMove, events.MouseEnter, events.MouseLeave,
-        events.PanStart, events.PanEnd, events.PinchStart, events.PinchEnd,
     ]
 
 
     def __init__(self, *argv, **argd):
-        super(tSNE_PlotBokeh,self).__init__(*argv,**argd)
-        self._figure_ls = tSNE_PlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset,lasso_select")
-        self._figure_gn = tSNE_PlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset")
+        super(tSNE_PlotBokeh,self).__init__(*argv,**argd)        
+        self._figure_ls = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset,lasso_select")
+        self._figure_gn = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset")
+        self._figure_pgn = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset")
         self._div = tSNE_PlotBokeh.Div(width=200, height=400, height_policy="fixed")
-        self._layout = tSNE_PlotBokeh.row(self._figure_ls, self._figure_gn, self._div)        
+        self._layout = tSNE_PlotBokeh.row(self._figure_ls, self._figure_gn, self._figure_pgn)  # , self._div
 
         # LS PLOT
         self._data_ls = tSNE_PlotBokeh.ColumnDataSource(data=dict(x=[],y=[],id=[]))
-        scatter_ls = self._figure_ls.circle('x','y',size=10,source=self._data_ls ,alpha=0.4, hover_color='olive', hover_alpha=1.0)
-        # for event in tSNE_PlotBokeh.point_events:
-        #     self._figure_ls.js_on_event(event, self.display_event(self._div, attributes=tSNE_PlotBokeh.point_attributes))
+        scatter_ls = self._figure_ls.circle('x','y', size=10, source=self._data_ls, alpha=0.4, hover_color='olive', hover_alpha=1.0)
 
         # GN PLOT        
         self._data_gn  = tSNE_PlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
@@ -79,17 +79,24 @@ class tSNE_PlotBokeh(SNEPlot):
         self._figure_gn.multi_line('x','y', source=self._data_gn)
         self._figure_gn.multi_line('x','y', source=self._data_gn2, color='red')
 
+        self._data_pgn  = tSNE_PlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
+        self._data_pgn2 = tSNE_PlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
+        self._figure_pgn.multi_line('x','y', source=self._data_pgn)
+        self._figure_pgn.multi_line('x','y', source=self._data_pgn2, color='red')
+
         # trace     
         self._inx = tSNE_PlotBokeh.TextInput(value='')
         def inx_cb(attr, old, new):
             ids = [int(x.strip()) for x in new.split()]
-            self._plot_cb(ids, self._data_gn)
+            self._plot_cb(ids, self._data_gn,  axis='rho')
+            self._plot_cb(ids, self._data_pgn, axis='prel')
         self._inx.on_change('value',inx_cb)
 
         self._inh = tSNE_PlotBokeh.TextInput(value='')
         def inh_cb(attr, old, new):
             ids = [int(x.strip()) for x in new.split()]
-            self._plot_cb(ids, self._data_gn2)
+            self._plot_cb(ids, self._data_gn2, axis='rho')
+            self._plot_cb(ids, self._data_pgn2, axis='prel')
         self._inh.on_change('value',inh_cb)
         
         # EVENTS CONNECTIONS
@@ -105,22 +112,20 @@ class tSNE_PlotBokeh(SNEPlot):
 
     def set_data(self, data, counts=200):
         super(tSNE_PlotBokeh, self).set_data(data)
+        self._counts=counts
         md = self._model
         ds = self._data._dataset[0:counts]
-        
-        xy = md((ds['te']))
+        xy = md(( np.concatenate([ds['prel'],ds['te']], axis=1) ))
         ds_dict = dict(x=xy[:,0],y=xy[:,1],id=range(counts),prel=ds['prel'],te=ds['te'])
-        self._data_ls.data = ds_dict        
+        self._data_ls.data = ds_dict
 
-
-    def _plot_cb(self, ids, data):
+    def _plot_cb(self, ids, data, axis='prel'):
         qsh = self._data
-        ds = self._data._dataset[0:200]        
-        x = [ qsh.clean_array(ds[i]['prel']) for i in ids ]
+        ds = self._data._dataset[0:self._counts]
+        x = [ qsh.clean_array(ds[i][axis]) for i in ids ]
         y = [ qsh.clean_array(ds[i]['te']) for i in ids ]
         if len(x) > 0:
             data.data = dict(x=x,y=y)
-        
         
     def selected_event(self, attributes=[]):
         return tSNE_PlotBokeh.CustomJS(args=dict(inx=self._inx, data_ls=self._data_ls), code="""

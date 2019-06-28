@@ -1,4 +1,10 @@
+'''
+Prova per vedere se si riesce a mettere un ulteriore layer variazionale che compensa la diversa distribuzione dei
+valori di input ... x varia (0,1) mentre y varia poco ... e la rete converge sempre sul punto medio
 
+TUTTAVIA SEMBRA NON FUNZIONARE
+
+'''
 
 
 from __future__ import absolute_import
@@ -20,7 +26,6 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
 import ipysh
-
 
 
 
@@ -56,7 +61,7 @@ from tensorflow.keras import preprocessing
 from tensorflow.keras import regularizers
 from tensorflow.keras import utils    
 
-class NaNDense2(tf.keras.layers.Dense):
+class NaNDense(tf.keras.layers.Layer):
   """Just your regular densely-connected NN layer.
 
   Arguments:
@@ -101,20 +106,67 @@ class NaNDense2(tf.keras.layers.Dense):
                **kwargs):
     if 'input_shape' not in kwargs and 'input_dim' in kwargs:
       kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-    super(NaNDense2, self).__init__(activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
 
+
+    super(NaNDense, self).__init__(
+        activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
+    self.units = int(units)
+    self.activation = activations.get(activation)
+    self.use_bias = use_bias
+    self.kernel_initializer = initializers.get(kernel_initializer)
+    self.bias_initializer = initializers.get(bias_initializer)
+    self.kernel_regularizer = regularizers.get(kernel_regularizer)
+    self.bias_regularizer = regularizers.get(bias_regularizer)
+    self.kernel_constraint = constraints.get(kernel_constraint)
+    self.bias_constraint = constraints.get(bias_constraint)
+
+    self.supports_masking = True
+    self.input_spec = tf.keras.layers.InputSpec(min_ndim=2)
+
+  def build(self, input_shape):
+    dtype = tf.dtypes.as_dtype(self.dtype or tf.dtypes.float32)
+    if not (dtype.is_floating or dtype.is_complex):
+      raise TypeError('Unable to build `Dense` layer with non-floating point '
+                      'dtype %s' % (dtype,))
+    input_shape = tf.TensorShape(input_shape)
+    if input_shape[-1] is None:
+      raise ValueError('The last dimension of the inputs to `Dense` '
+                       'should be defined. Found `None`.')
+    last_dim = input_shape[-1]
+    self.input_spec = tf.keras.layers.InputSpec(min_ndim=2,
+                                axes={-1: last_dim})
+    self.kernel = self.add_weight(
+        'kernel',
+        shape=[last_dim, self.units],
+        initializer=self.kernel_initializer,
+        regularizer=self.kernel_regularizer,
+        constraint=self.kernel_constraint,
+        dtype=self.dtype,
+        trainable=True)
+    if self.use_bias:
+      self.bias = self.add_weight(
+          'bias',
+          shape=[self.units,],
+          initializer=self.bias_initializer,
+          regularizer=self.bias_regularizer,
+          constraint=self.bias_constraint,
+          dtype=self.dtype,
+          trainable=True)
+    else:
+      self.bias = None
+    self.built = True
 
   def call(self, inputs):
     inputs = tf.convert_to_tensor(inputs)
+    # scale = tf.cast(tf.shape(inputs), dtype=tf.float32) / tf.reduce_sum(tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), tf.ones_like(inputs)), axis=1 )
     inputs = tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), inputs)
-    
     outputs = tf.matmul(inputs, self.kernel)
-
     if self.use_bias:
       outputs = tf.nn.bias_add(outputs, self.bias)
     if self.activation is not None:
       return self.activation(outputs)  # pylint: disable=not-callable
     return outputs
+
 
   def compute_output_shape(self, input_shape):
     input_shape = tf.TensorShape(input_shape)
@@ -148,6 +200,34 @@ class NaNDense2(tf.keras.layers.Dense):
 
 
 
+class ShuffleLayer(tf.keras.layers.Layer):
+  def __init__(self, size):
+    super(ShuffleLayer, self).__init__()
+    self._size = size
+
+  def call(self, x):
+    # dim_x = tf.shape(x)[tf.rank(x)-1]
+    dim_x = self._size
+    xy = tf.reshape(x, [-1,2,int(dim_x/2)])
+    xy = tf.transpose(xy, perm=[2,1,0]) # reorder shuffling axes
+    xy = tf.random.shuffle(xy)          # shuffle along the first dimension
+    xy = tf.transpose(xy, perm=[2,1,0]) # recover first order
+    xy = tf.reshape(xy,[-1,dim_x])
+    return xy
+
+
+class RollNanLayer(tf.keras.layers.Layer):
+  def __init__(self, size):
+    super(RollNanLayer, self).__init__()
+    self._size = size
+
+  def call(self, x):
+    dim_x = self._size
+    x = tf.where(tf.math.is_nan(x), tf.roll(x, 1, axis=1), x)
+    x = tf.where(tf.math.is_nan(x), tf.roll(x, 1, axis=1), x)
+    x = tf.where(tf.math.is_nan(x), tf.roll(x, 1, axis=1), x)
+    x = tf.where(tf.math.is_nan(x), tf.roll(x, 1, axis=1), x)
+    return x
 
 
 
@@ -162,68 +242,98 @@ class NaNDense2(tf.keras.layers.Dense):
 .##.....##..#######..########..########.########
 """
 
+def linear_activation(x):
+  """Linear activation function.
+  Returns:
+      The linear activation: `x`.
+  """
+  return x
+
+
 class AEFIT(tf.keras.Model):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
     
-    def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None):
+    def __init__(self, feature_dim=40, reparametrize_dim=4, latent_dim=2, latent_intervals=None, scale=1):
         super(AEFIT, self).__init__()
         self.latent_dim = latent_dim
+        self.reparametrize_dim = reparametrize_dim
         self.feature_dim = feature_dim
         self.dprate = 0.2
+        self.scale = scale
         self.set_model()
-        print('aefit 0 configured')
+        print('aefit 1 configured')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
         latent_dim = self.latent_dim
+        reparametrize_dim = self.reparametrize_dim
+        scale = 2
+        activation = linear_activation
+        # activation = tf.nn.sigmoid
+
         if training: dprate = self.dprate
         else: dprate = 0.
         self.nan_mask = NaNMask(feature_dim)
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim,)),
-            NaNDense(feature_dim, activation=tf.nn.relu),  #, activity_regularizer=tf.keras.regularizers.l1_l2(0.001)
+            NaNDense(feature_dim, activation=activation), #, activation=tf.nn.relu),  #, activity_regularizer=tf.keras.regularizers.l1_l2(0.001)
             # tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation), #, activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation), #, activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(2*latent_dim),
+            tf.keras.layers.Dense(2*reparametrize_dim),
             ] )
+        
+        self.reparametrize_net = tf.keras.Sequential( [
+            tf.keras.layers.Input(shape=(reparametrize_dim,)),
+            tf.keras.layers.Dense(reparametrize_dim),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation), #, activation=tf.nn.relu),
+            tf.keras.layers.Dense(2*latent_dim),
+        ])
         ## GENERATION ##
         self.generative_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(latent_dim,)),
-            tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
+            tf.keras.layers.Dense(units=latent_dim, activation=activation),# , activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),# , activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),# , activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(units=feature_dim),
         ] )
         self.inference_net.build()
+        self.reparametrize_net.build()
         self.generative_net.build()
 
-    def sample(self, eps=None):
-        if eps is None:
-            eps = tf.random.normal(shape=([-1,self.latent_dim]))
-        return self.decode(eps, apply_sigmoid=True)
 
-    def encode(self, X):
+    def encode1(self, X):
         # X = self.nan_mask(X)
         X = tf.clip_by_value(X,0.,1.)
         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
         return mean, logvar
-
-    def reparameterize(self, mean, logvar):
+    
+    def reparametrize1(self, mean, logvar):
         eps = tf.random.normal(shape=mean.shape)
         return eps * tf.exp(logvar * .5) + mean
+
+    def encode2(self, X):        
+        mean, logvar = tf.split(self.reparametrize_net(X), num_or_size_splits=2, axis=1)
+        return mean, logvar
+
+    def reparametrize2(self, mean, logvar):        
+        eps = tf.random.normal(shape=mean.shape)
+        return eps * tf.exp(logvar * .5) + mean
+
+    def encode(self, X):
+        m,v = self.encode1(X)
+        return self.encode2(self.reparametrize1(m,v))
+        
+    def reparameterize(self, mean, logvar):
+        return self.reparametrize2(mean,logvar)
 
     def decode(self, s, apply_sigmoid=False):
         x = self.generative_net(s)
@@ -235,18 +345,24 @@ class AEFIT(tf.keras.Model):
         def vae_logN_pdf(sample, mean, logvar, raxis=1):
             log2pi = tf.math.log(2. * np.pi)
             return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
-        xy = tf_nan_to_num(input)        
-        mean,logv = self.encode(xy)
-        z = self.reparameterize(mean,logv)
-        XY = tf_nan_to_num(self.decode(z))
-
+        #
+        att = tf.math.is_nan(input)
+        xy  = tf_nan_to_num(input, 0.)
+        m1,v1 = self.encode1(xy)
+        z = self.reparametrize1(m1,v1)
+        m2,v2 = self.encode2(z)
+        s = self.reparametrize2(m2,v2)
+        XY = self.decode(s)
+        XY = tf.where(att, tf.zeros_like(XY), XY)
         #
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
         logpx_z = -tf.reduce_sum(crossen, axis=[1])
         logpz   =  vae_logN_pdf(z, 0., 1.)
-        logqz_x =  vae_logN_pdf(z, mean, logv)
-        l_vae   = -tf.reduce_mean(logpx_z + logpz - logqz_x)
-        #   
+        logqz_x =  vae_logN_pdf(z, m1, v1)
+        logps   =  vae_logN_pdf(s, 0., 1.)
+        logqs_x =  vae_logN_pdf(s, m2, v2)
+        l_vae   = -tf.reduce_mean(logpx_z + logpz - logqz_x + logps - logqs_x)
+        #
         return l_vae
 
     def plot_generative(self, z):
@@ -272,16 +388,10 @@ def compute_gradients(model, x):
 def apply_gradients(optimizer, gradients, variables):
     optimizer.apply_gradients(zip(gradients, variables))
 
-def vae_log_normal_pdf(sample, mean, logvar, raxis=1):
-    log2pi = tf.math.log(2. * np.pi)
-    return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
 
 
 
-
-
-
-def test_dummy(model, data, counts=60000, epoch=40, batch=400, loss_factor=1e-3):
+def test_dummy(model, data, epoch=40, batch=400, loss_factor=1e-3):
     import seaborn as sns
     import Dummy_g1data as g1
     from sklearn.cluster import KMeans
@@ -291,12 +401,13 @@ def test_dummy(model, data, counts=60000, epoch=40, batch=400, loss_factor=1e-3)
     ax2 = fig.add_subplot(122)
 
     # ts,ls = data.ds_array.shuffle(counts).batch(batch).make_one_shot_iterator().get_next()
+    ds_size = len(data)
 
     count = 0
     optimizer = tf.keras.optimizers.Adam(loss_factor)
     g1.test_gendata(data)
     for e in range(epoch):
-        ds = data.ds_array.shuffle(counts).batch(batch)
+        ds = data.ds_array.batch(batch)
         for X in ds:
                 X_data,_ = X                
                 gradients, loss = compute_gradients(model, X_data)
@@ -307,14 +418,12 @@ def test_dummy(model, data, counts=60000, epoch=40, batch=400, loss_factor=1e-3)
                   print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
                   
                   m,v = model.encode(X_data)
-                  # m,v = model.encode(ts)
                   z   = model.reparameterize(m,v)
                   XY  = model.decode(z,apply_sigmoid=True)
                   X,Y = tf.split(XY,2, axis=1)
                   
                   ax1.clear()
-                  ax1.plot(m[:,0],m[:,1],'.')
-                  # plt.plot(v[:,0],v[:,1],'.')
+                  ax1.plot(z[:,0],z[:,1],'.')
                   
                   ax2.clear()
                   # for i in range(model.latent_dim):

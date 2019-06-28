@@ -27,6 +27,9 @@ class Dummy_g1data():
         self._counts = counts
         self._size = size
         self._noise = noise_var
+        self._nanmask = None
+        self._nanprob = None
+        self._fixed_nanmask = None
         if nanmask is not None:
             self._nanmask = np.array(nanmask)
         if nanprob is not None:
@@ -60,11 +63,11 @@ class Dummy_g1data():
         else:
             y = gauss(x,k['mean'],k['sigma'],k['gain'])
         
-        mask = np.ones_like(x)
+        mask = np.zeros_like(x)
         if self._nanprob is not None:
             mask = np.random.uniform(size=self._size)
             mask = (mask < self._nanprob).astype(float)
-                    
+
         # if self._nanmask is not None:
         #     mask = self._nanmask & np.random.randint(2, size=self._size)
         #     if self._fixed_nanmask is not None:

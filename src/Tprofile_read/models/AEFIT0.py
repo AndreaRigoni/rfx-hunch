@@ -317,42 +317,44 @@ class AEFIT(tf.keras.Model):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
     
-    def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None):
+    def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None, dprate = 0., scale=1, activation=tf.nn.relu):
         super(AEFIT, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
-        self.dprate = 0.
+        self.dprate = dprate
+        self.scale = scale
+        self.activation = activation
         self.set_model()
-        print('aefit 0 configured')
+        print('aefit 0 configured new')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
         latent_dim = self.latent_dim
         if training: dprate = self.dprate
         else: dprate = 0.
+        scale = self.scale
+        activation = self.activation
         self.nan_mask = NaNMask(feature_dim)
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim,)),
-            # ShuffleLayer(feature_dim),
-            NaNDense(feature_dim, activation=tf.nn.relu),  #, activity_regularizer=tf.keras.regularizers.l1_l2(0.001)
-            # RollNanLayer(feature_dim),
-            tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
+            NaNDense(feature_dim, activation=activation),  #, activity_regularizer=tf.keras.regularizers.l1_l2(0.001)
+            # tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 20, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 10, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
             tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(2*latent_dim),
             ] )
         ## GENERATION ##
         self.generative_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(latent_dim,)),
-            tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
+            tf.keras.layers.Dense(units=latent_dim, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 10, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 20, activation=tf.nn.relu),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(units=feature_dim),
         ] )
@@ -384,21 +386,20 @@ class AEFIT(tf.keras.Model):
         def vae_logN_pdf(sample, mean, logvar, raxis=1):
             log2pi = tf.math.log(2. * np.pi)
             return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
-        
+        #
         att = tf.math.is_nan(input)
         xy  = tf_nan_to_num(input, 0.)
         mean,logv = self.encode(xy)
         z = self.reparameterize(mean,logv)
         XY = self.decode(z)
         XY = tf.where(att, tf.zeros_like(XY), XY)
-
         #
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
         logpx_z = -tf.reduce_sum(crossen, axis=[1])
         logpz   =  vae_logN_pdf(z, 0., 1.)
         logqz_x =  vae_logN_pdf(z, mean, logv)
         l_vae   = -tf.reduce_mean(logpx_z + logpz - logqz_x)
-        #   
+        #
         return l_vae
 
     def plot_generative(self, z):

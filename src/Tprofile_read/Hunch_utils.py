@@ -175,7 +175,7 @@ class tSNE(Struct):
     data_C = None
     data_S = None
     fig  = None
-    interactive = True
+    interactive = False
     n_components  = property()
     perplexity    = property()
     learning_rate = property()
@@ -192,7 +192,7 @@ class tSNE(Struct):
                     
     def __getattr__(self, name):
         if name in self.tSNE.__dict__:
-            return getattr(self.tSNE.__dict__, name)        
+            return getattr(self.tSNE, name)        
 
     def __call__(self, data):
         if isinstance(data, tuple):
@@ -371,13 +371,17 @@ class QSH_Dataset():
     def __getitem__(self, key):
         if isinstance(key, int):
             return QSH(self._dataset[key])
+        elif isinstance(key, range):
+            return self._dataset[key]
         elif isinstance(key, str):
             return self._dataset[:][key]
 
     # set by reference
     def __setitem__(self, key, value):
-        if isinstance(key, int):
+        if isinstance(key, int) or isinstance(key, range):
             self._dataset[key] = value
+        elif isinstance(key, range):
+            return self._dataset[key]
         elif isinstance(key, str):
             self._dataset[:][key] = value
 
@@ -398,8 +402,8 @@ class QSH_Dataset():
 
     def set_dim(self, dim):
         self._dim = dim
-        if self.is_balanced and self._balance != dim:
-            self.rebalance_prel(dim)
+        # if self.is_balanced and self._balance != dim:
+        #     self.rebalance_prel(dim)
 
     def is_balanced(self):
         return self._balance != 0
@@ -425,13 +429,24 @@ class QSH_Dataset():
             return a[a!=self._null]
 
     def clean_up_poorcurves(self, count=1):
-        def count_valid(data):
-            return len([i for i in data if not self.is_null(i) ])
-        cleandata = []
-        for i in self._dataset:
-            if count_valid(i['prel']) > count:
-                cleandata.append(i)
-        self._dataset = np.array(cleandata, dtype=self._dataset.dtype)
+        ds = [el for el in self._dataset if len( self.clean_array(el['prel']) ) > count]
+        self._dataset = np.array(ds, dtype=self._dataset.dtype)
+
+    def filter_number_set(self, count):
+        ds = [el for el in self._dataset if len( self.clean_array(el['prel']) ) == count]
+        self._dataset = np.array(ds, dtype=self._dataset.dtype)
+        self.dim = count
+
+    def unbias_mean(self, mean=None, axis='te'):
+        assert np.isnan(self.get_null())
+        if mean is None:
+            mean = np.nanmean(self[axis])
+        for x in self._dataset:
+            y = x[axis]
+            x[axis] = y-np.nanmean(y)
+        
+    def clip_values(self, a_min, a_max, axis='te'):
+        self._dataset['te'] = np.clip(self._dataset['te'], a_min=a_min, a_max=a_max )
 
     def get_null(self):
         return self._null
@@ -441,15 +456,14 @@ class QSH_Dataset():
             datasets = ['prel', 'rho', 'te']
         for ds in datasets:
             el = self[ds]
-            el[el==self._null] = s_out
+            el[self.is_null(el)] = s_out
         self._null = s_out    
 
     def is_null(self, x):
-        if np.isnan(self._null) or np.isinf(self._null):
-            return not np.isfinite(x)
+        if np.isnan(self._null):
+            return np.isnan(x)
         else:
             return x==self._null
-
 
     null = property(get_null,set_null)
 
@@ -467,27 +481,50 @@ class QSH_Dataset():
         for el in self:
             pr_c = self.clean_array(el.prel)
             te_c = self.clean_array(el.te)
-            # rho_c = self.clean_array(el.rho)
             id = lut[k.predict(pr_c.reshape(-1,1))]
             el.prel[:] = self.null
             el.prel[id] = pr_c
             el.te[:] = self.null
             el.te[id] = te_c
-            # el.rho[:] = self.null
-            # el.rho[id] = rho_c
         self._is_balanced = True
         self._dim = n_clusters
         return k
 
+    def rebalance_rho(self ,n_clusters=20):
+        from sklearn.cluster import KMeans            
+        rho = self.clean_array(self.data['rho']).reshape(-1,1)
+        k = KMeans(n_clusters=n_clusters, random_state=0)
+        k.fit(rho)
+        idx = np.argsort(k.cluster_centers_.sum(axis=1))
+        lut = np.zeros_like(idx)
+        lut[idx] = np.arange(k.n_clusters)
+        for el in self:
+            pr_c = self.clean_array(el.rho)
+            te_c = self.clean_array(el.te)
+            id = lut[k.predict(pr_c.reshape(-1,1))]
+            el.rho[:] = self.null
+            el.rho[id] = pr_c
+            el.te[:] = self.null
+            el.te[id] = te_c
+        self._is_balanced = True
+        self._dim = n_clusters
+        return k
 
     def set_normal_positive(self):
         # assert self._null == np.nan
-        p_min = np.nanmin(self['prel'])
-        p_max = np.nanmax(self['prel'])
-        self['prel'] = (self['prel']-p_min)/(p_max-p_min)
-        t_min = np.nanmin(self['te'])
-        t_max = np.nanmax(self['te'])
-        self['te'] = (self['te']-t_min)/(t_max-t_min)
+        _null = self._null 
+        if not np.isnan(self._null):
+            print("Warning normilizing not a null=nan qsh... this will not normalize null value")
+            self.set_null(np.nan)
+        def normalize(axis):
+            data = self[axis]
+            _min = np.nanmin(data)
+            _max = np.nanmax(data)
+            self[axis] = (data-_min)/(_max-_min)
+        normalize('prel')
+        normalize('te')
+        normalize('rho')
+        self.set_null(_null)
         
 
     def missing_values_mask(self, datasets=None):
@@ -534,6 +571,9 @@ class QSH_Dataset():
         return tf.data.Dataset.from_generator(gen, types, shape)
         
 
+    
+
+    ## REWRITE WITHOUT TF
     def plot_hisotgrams(self):
         import seaborn as sns        
         x = range(20)

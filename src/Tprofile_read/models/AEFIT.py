@@ -19,7 +19,7 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
 import ipysh
-
+from models.base import VAE
 
 
 """
@@ -32,7 +32,7 @@ import ipysh
 .##.....##..#######..########..########.########
 """
 
-class AEFIT(tf.keras.Model):
+class AEFIT(VAE):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
 
@@ -138,9 +138,6 @@ def compute_gradients(model, x):
 
 def apply_gradients(optimizer, gradients, variables):
     optimizer.apply_gradients(zip(gradients, variables))
-
-
-
 
 def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=1e-3):    
     import seaborn as sns

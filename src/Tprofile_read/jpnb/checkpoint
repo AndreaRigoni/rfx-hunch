@@ -1,0 +1,2 @@
+model_checkpoint_path: "step7_cae_r15_decoder.kcp"
+all_model_checkpoint_paths: "step7_cae_r15_decoder.kcp"

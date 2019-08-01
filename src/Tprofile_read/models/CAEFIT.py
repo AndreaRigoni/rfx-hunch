@@ -1,5 +1,7 @@
 
-
+'''
+Prova per introdurre un set di layer convoluizonali con x e y come pixels adiacenti.
+'''
 
 from __future__ import absolute_import
 from __future__ import division
@@ -27,46 +29,45 @@ def tf_nan_to_num(x, num=0.):
     return tf.where(tf.math.is_nan(x), tf.ones_like(x) * num, x)
 
 
-"""
-.##....##....###....##....##....########..########.##....##..######..########
-.###...##...##.##...###...##....##.....##.##.......###...##.##....##.##......
-.####..##..##...##..####..##....##.....##.##.......####..##.##.......##......
-.##.##.##.##.....##.##.##.##....##.....##.######...##.##.##..######..######..
-.##..####.#########.##..####....##.....##.##.......##..####.......##.##......
-.##...###.##.....##.##...###....##.....##.##.......##...###.##....##.##......
-.##....##.##.....##.##....##....########..########.##....##..######..########
-"""
+# """
+# .##....##....###....##....##....########..########.##....##..######..########
+# .###...##...##.##...###...##....##.....##.##.......###...##.##....##.##......
+# .####..##..##...##..####..##....##.....##.##.......####..##.##.......##......
+# .##.##.##.##.....##.##.##.##....##.....##.######...##.##.##..######..######..
+# .##..####.#########.##..####....##.....##.##.......##..####.......##.##......
+# .##...###.##.....##.##...###....##.....##.##.......##...###.##....##.##......
+# .##....##.##.....##.##....##....########..########.##....##..######..########
+# """
 
 
 
-class NaNDense(tf.keras.layers.Dense):
-    """Just your regular densely-connected NN layer.
-    """
-    def __init__(self,
-               units,
-               activation=None,
-            #    use_bias=True,
-            #    kernel_initializer='glorot_uniform',
-            #    bias_initializer='zeros',
-            #    kernel_regularizer=None,
-            #    bias_regularizer=None,
-            #    activity_regularizer=None,
-            #    kernel_constraint=None,
-            #    bias_constraint=None,
-               **kwargs):
-        super(NaNDense, self).__init__( units, activation, **kwargs)
+# class NaNDense(tf.keras.layers.Dense):
+#     """Just your regular densely-connected NN layer.
+#     """
+#     def __init__(self,
+#                units,
+#                activation=None,
+#             #    use_bias=True,
+#             #    kernel_initializer='glorot_uniform',
+#             #    bias_initializer='zeros',
+#             #    kernel_regularizer=None,
+#             #    bias_regularizer=None,
+#             #    activity_regularizer=None,
+#             #    kernel_constraint=None,
+#             #    bias_constraint=None,
+#                **kwargs):
+#         super(NaNDense, self).__init__( units, activation, **kwargs)
         
     
-    def call(self, inputs):
-        inputs = tf.convert_to_tensor(inputs)
-        inputs = tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), inputs)
-        outputs = tf.matmul(inputs, self.kernel)
-        if self.use_bias:
-            outputs = tf.nn.bias_add(outputs, self.bias)
-        if self.activation is not None:
-            return self.activation(outputs)  # pylint: disable=not-callable
-        return outputs
-
+#     def call(self, inputs):
+#         inputs = tf.convert_to_tensor(inputs)
+#         inputs = tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), inputs)
+#         outputs = tf.matmul(inputs, self.kernel)
+#         if self.use_bias:
+#             outputs = tf.nn.bias_add(outputs, self.bias)
+#         if self.activation is not None:
+#             return self.activation(outputs)  # pylint: disable=not-callable
+#         return outputs
 
 
 
@@ -84,12 +85,12 @@ class NaNDense(tf.keras.layers.Dense):
 .##.....##..#######..########..########.########
 """
 
-class AEFIT2(VAE):
+class CAEFIT(VAE):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
     
     def __init__(self, feature_dim=40, latent_dim=2, dprate = 0., scale=1, activation=tf.nn.relu, beta=1.):
-        super(AEFIT2, self).__init__()
+        super(CAEFIT, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
         self.dprate = dprate
@@ -97,7 +98,7 @@ class AEFIT2(VAE):
         self.activation = activation
         self.set_model()
         self.beta = beta
-        print('AEFIT2 ready:')
+        print('CAEFIT ready:')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
@@ -107,19 +108,24 @@ class AEFIT2(VAE):
         scale = self.scale
         activation = self.activation
         
+    #   kernel_size: An integer or tuple/list of 3 integers, specifying the
+    #   depth, height and width of the 3D convolution window.
+    #   Can be a single integer to specify the same value for
+    #   all spatial dimensions.
+
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential( [
-            tf.keras.layers.Input(shape=(feature_dim,)),
-            NaNDense(feature_dim, activation=activation),
-            # tf.keras.layers.Dense(feature_dim, activation=activation),
+            tf.keras.layers.Input(shape=(feature_dim)),
+            tf.keras.layers.Reshape( target_shape=(2,int(feature_dim/2),1) ),
+            tf.keras.layers.Conv2D(filters=16*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding='SAME'),
+            tf.keras.layers.Conv2D(filters=32*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding='SAME'),
+            tf.keras.layers.Conv2D(filters=32*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding='SAME'),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(feature_dim * 10 * scale, activation=activation),            
             tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(2*latent_dim),
             ] )
@@ -128,16 +134,19 @@ class AEFIT2(VAE):
         self.generative_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(latent_dim,)),
             tf.keras.layers.Dense(units=latent_dim, activation=activation),
+            tf.keras.layers.Dense(feature_dim * 10 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
-            tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(units=feature_dim),
+            tf.keras.layers.Reshape(target_shape=(2, int(feature_dim/2), int(20*scale) )),
+            tf.keras.layers.Conv2DTranspose(filters=32*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding="SAME"),
+            tf.keras.layers.Conv2DTranspose(filters=32*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding="SAME"),
+            tf.keras.layers.Conv2DTranspose(filters=16*scale, kernel_size=(2,3), strides=(1, 1), activation=activation, padding="SAME"),
+            tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(1,1), strides=(1, 1), padding="SAME"),
+            tf.keras.layers.Flatten(),
+            # tf.keras.layers.Dense(units=feature_dim),
         ] )
         self.inference_net.build()
         self.generative_net.build()
@@ -162,14 +171,6 @@ class AEFIT2(VAE):
             x = tf.sigmoid(x)
         return x
 
-    def call(self, x):
-        m,_ = self.encode(x)
-        return self.decode(m, apply_sigmoid=True)
-
-    def recover(self,x):
-        xr = self.call(x)
-        return tf.where(tf.math.is_nan(x),xr,x)
-
     def compute_loss(self, input):
         def vae_logN_pdf(sample, mean, logvar, raxis=1):
             log2pi = tf.math.log(2. * np.pi)
@@ -193,7 +194,7 @@ class AEFIT2(VAE):
     def plot_generative(self, z):
         s = self.decode(tf.convert_to_tensor([z]),apply_sigmoid=True) 
         x,y = tf.split(s,2,axis=1)
-        plt.plot(x[0],y[0])        
+        plt.plot(x[0],y[0])
 
     def save(self, filename):
         self.inference_net.save_weights(filename+'_encoder.kcp')

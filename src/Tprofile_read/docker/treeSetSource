@@ -1,0 +1,44 @@
+#!/bin/sh
+#export SERVER_NODE=raserver3::
+#if [ $# -ne 2 ] || [ $2 != "active"  -a  $2 != "inProgress" -a $2 != "update" ] || [ $1 != "rfx"  -a  $2 = "update"  ] ; then
+#     echo 1>&2 Usage   : treeSetSource '<esperiment name> < active | inProgress >'
+#     echo 1>&2 Usage   : treeSetSource 'rfx update ; to access pulse file in update'
+#     echo 1>&2 Example : treeSetSource 'dbot inProgress ; set pulse source inProgress for experiment dbot'
+verNum=`echo $2 | awk  '/[0-9]{4}/ {print $0}'`
+numDigit=`expr length "$verNum"`
+if [ $# -ne 2 ] || [ $2 != "active"  -a  $2 != "inProgress" -a $2 != "update"  -a  $numDigit != "4" ] || [ $1 != "rfx"  -a  $2 = "update"  ] ; then
+     echo 1>&2 Usage   : treeSetSource '<experiment name> < active | inProgress | nnnn >'
+     echo 1>&2 Usage   : treeSetSource 'rfx update ; to access pulse file in update'
+     echo 1>&2 Example : treeSetSource 'dbot inProgress ; set pulse source inProgress for experiment dbot'
+else
+    exp=`echo $1 | tr '[:upper:]' '[:lower:]'`
+        if [ -r /usr/local/mdsplus/setup.sh ]; then
+                tmp=${exp}_ver
+                eval 'export' $tmp=$2
+                if [ $exp = "rfx" -a $2 = "update" ]; then
+                        setup_file=/usr/local/rfx/data_acquisition/scripts/rfxVersioning/envsyms_updating
+                        if [ -r $setup_file ]; then
+                                . /usr/local/mdsplus/setup.sh
+                        fi
+                else
+                        if [ $exp = "rfx" ]; then
+                                setup_file=/cluster/config/mdsplus/experimentsVersion
+                                if [ -r $setup_file ]; then
+                                        . /usr/local/mdsplus/setup.sh
+                                fi
+                        fi
+                        setup_file=/cluster/config/mdsplus/experimentsVersionPath
+
+                        #La Varaibile di ambiente  activateTestRegion  settata in  testShotsVersionEnvironment.sh  e disabilitata in 
+                        # verSetEnvironment e' usata per la gestione dei dati in /shot_version/... 
+                        if [ -n "$activateTestRegion"   ]; then
+                                setup_file=/usr/local/rfx/data_acquisition/scripts/rfxVersioning/testExperimentVersionPath
+                        fi
+                        # fine
+                        if [ -r $setup_file ]; then
+                                source /usr/local/mdsplus/setup.sh
+                        fi
+                fi
+                unset setup_file        
+        fi
+fi

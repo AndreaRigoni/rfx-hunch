@@ -36,6 +36,8 @@ tf-init: pip-install | tensorflow_src
 	@ :; 
 
 
+# MDSplus setup to access Analisys variables (offline)
+# RUN_PREQUEL = treeSetSource A inProgress;
 
 PYTHON_PACKAGES += bokeh bokeh-metaplot sklearn
 DOCKER_TARGETS += pip-install
@@ -54,7 +56,7 @@ tf-build: tf-configure | tf-init
 
 tf-shell: ##@tf enter container with shell (bash)
 tf-shell: tf-init
-	@ bash -l
+	@ $(RUN_PREQUEL) bash -l
 
 ## ...##.##.....##.##.........###....########..########.
 ## ...##.##.....##.##........##.##...##.....##.##.....##
@@ -71,11 +73,7 @@ export rfx_ver = inProgress
 # automatically reload the following files (this works only if 'ipysh' has been imported too)
 export IPY_AIMPORT = Hunch_utils \
 					 Hunch_lsplot \
-					 models.AEFIT \
-					 models.AEFIT_v1 \
-					 models.AEFIT0 \
-					 models.AEFIT1 \
-					 models.SPFIT \
+					 models \
 					 Dummy_g1data
 
 
@@ -87,16 +85,16 @@ te_db_1.npy: create_db_1.py | pip-install
 
 
 DOCKER_TARGETS += runpy
-PYSCRIPTS = examples/AEFIT_dummy.py
+PYSCRIPTS = examples/AEFIT_qsh.py
 runpy: ##@jp Run ipython console starting by script defined in $NAME or $PYSCRIPTS
 runpy: DOCKER_CONTAINER = tf-build
 runpy: $(NAME) $(PYSCRIPTS) te_db_1.npy | pip-install
-	@ ipython -i $< $(ARGS)
+	@ $(RUN_PREQUEL) ipython -i $< $(ARGS)
 
 DOCKER_TARGETS += jupyter
 jupyter: DOCKER_CONTAINER = tf-build
 jupyter: ##@jp start jupyter server on jpnb $(srcdir) folder
-	@ jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=$(abs_srcdir)/jpnb
+	@ $(RUN_PREQUEL) jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=$(abs_srcdir)/jpnb
 
 
 DOWNLOADS += rdipietro

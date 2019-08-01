@@ -322,18 +322,7 @@ class Clustering(Struct):
 
 
 class QSH(Struct):
-    __metaclass__ = abc.ABCMeta        
-    label   = property()
-    i_qsh   = property()
-    tborder = property()
-    tcenter = property()
-    pos     = property()
-    grad    = property()
-    n_ok    = property()
-    prel    = property()
-    rho     = property()
-    te      = property()
-    
+    __metaclass__ = abc.ABCMeta            
     _dtype = np.dtype ( [  ('label','S10'),
                                 ('i_qsh', np.int32 ),
                                 ('tbordo','>f4' ),
@@ -344,6 +333,27 @@ class QSH(Struct):
                                 ('prel','>f4', (20,) ),
                                 ('rho','>f4', (20,) ),
                                 ('te','>f4', (20,) ),
+
+							# SHEq map
+							('mapro','>f4', (51,51) ),
+							('xxg','>f4', (51,) ),
+							('yyg','>f4', (51,) ),
+
+							# Spectrum
+							('n', '>i4', (10,) ),
+							('absBt_rm', '>f4', (10,)),
+							('argBt_rm', '>f4', (10,)),
+							('absBr_rm', '>f4', (10,)),
+							('argBr_rm', '>f4', (10,)),
+							('absBt_rs', '>f4', (10,)),
+							('argBt_rs', '>f4', (10,)),
+							('absBr_rs', '>f4', (10,)),
+							('argBr_rs', '>f4', (10,)),
+							('absBr_rp', '>f4', (10,)),
+							('argBr_rp', '>f4', (10,)),
+							('absBr_max', '>f4', (10,)),
+							('absFlux_max', '>f4', (10,)),
+
                             ] )
     _data = np.empty(1,dtype=_dtype)
 
@@ -355,10 +365,72 @@ class QSH(Struct):
 
     def __setattr__(self, name, val):
         self._data[name] = val
+    
+    def get_pulse(self):
+        # almeno verifico che sia un impulso di RFX-mod	
+        shot = int(self.label.split(b'_')[0])
+        if ( shot < 15600 or shot > 39391 ) :
+	        raise UserWarning('Not a RFX-mod shot')
+        return shot
+
+    def get_start(self):
+        ''' get start of the profile in relative time [ms]*1E-1
+        '''
+        return int(self.label.split(b'_')[1])
+    
+
+    label    = property()
+    i_qsh    = property()
+    tborder  = property()
+    tcenter  = property()
+    pos      = property()
+    grad     = property()
+    n_ok     = property()
+    prel     = property()
+    rho      = property()
+    te       = property()
+    pulse    = property(get_pulse)
+    start    = property(get_start)
+    
+    mapro = property()
+    xxg = property()
+    yyg = property()
+    
+    n = property()
+    absBt_rm = property()
+    argBt_rm = property()
+    absBr_rm = property()
+    argBr_rm = property()
+    absBt_rs = property()
+    argBt_rs = property()
+    absBr_rs = property()
+    argBr_rs = property()
+    absBr_rp = property()
+    argBr_rp = property()
+    absBr_max = property()
+    absFlux_max = property()
+
+
+    def plot_countour(self, ax = None):
+        # contour della topologia della mappa di flusso
+        if ax is None:
+            fig = plt.figure( 'Flux' )
+            fig.set_size_inches( 6, 5 )
+            fig.clf()
+            ax = plt.gca()
+        fig.subplots_adjust( top=0.95, bottom=0.08, left=0.08, right=0.95, hspace=0.2, wspace=0.2 )
+        ax.contour( self.xxg, self.yyg, self.mapro )
+        ax.set_aspect('equal', adjustable='box')
+        ax.set_title( r'%5d_%04d' % ( self.pulse, self.start ) )
 
 
 
-class QSH_Dataset():
+
+
+from models.base import Dataset
+import copy
+
+class QSH_Dataset(Dataset):
                 
     def __init__(self, dim=20):
         self._dataset = None
@@ -373,17 +445,25 @@ class QSH_Dataset():
             return QSH(self._dataset[key])
         elif isinstance(key, range):
             return self._dataset[key]
+        elif isinstance(key, slice):
+            qsh = copy.deepcopy(self)
+            qsh._dataset = self._dataset[key]
+            return qsh
         elif isinstance(key, str):
             return self._dataset[:][key]
+        else:
+            print("not supported index: ",type(key))
 
     # set by reference
     def __setitem__(self, key, value):
-        if isinstance(key, int) or isinstance(key, range):
+        if isinstance(key, int):
             self._dataset[key] = value
-        elif isinstance(key, range):
-            return self._dataset[key]
+        elif isinstance(key, range) or isinstance(key, slice):
+            self._dataset[key] = value
         elif isinstance(key, str):
             self._dataset[:][key] = value
+        else:
+            print("not supported index: ",type(key))
 
 
     # return a copy
@@ -571,11 +651,9 @@ class QSH_Dataset():
         return tf.data.Dataset.from_generator(gen, types, shape)
         
 
-    
-
     ## REWRITE WITHOUT TF
     def plot_hisotgrams(self):
-        import seaborn as sns        
+        import seaborn as sns
         x = range(20)
         def count_not_nan(xi):
             y = tf.boolean_mask(xi, tf.math.is_finite(xi))
@@ -595,8 +673,19 @@ class QSH_Dataset():
 
 
 
+
+    # PROPERTIES
     ds_tuple = property(get_tf_dataset)
     ds_array = property(get_tf_dataset_array)
+
+
+
+
+
+
+
+
+
 
 
 """

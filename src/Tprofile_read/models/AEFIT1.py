@@ -27,7 +27,7 @@ import matplotlib.colors as colors
 
 import ipysh
 
-
+from models.base import VAE
 
 def tf_nan_to_num(x, num=0.):
     return tf.where(tf.math.is_nan(x), tf.ones_like(x) * num, x)
@@ -250,19 +250,19 @@ def linear_activation(x):
   return x
 
 
-class AEFIT(tf.keras.Model):
+class AEFIT1(VAE):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
     
     def __init__(self, feature_dim=40, reparametrize_dim=4, latent_dim=2, latent_intervals=None, scale=1):
-        super(AEFIT, self).__init__()
+        super(AEFIT1, self).__init__()
         self.latent_dim = latent_dim
         self.reparametrize_dim = reparametrize_dim
         self.feature_dim = feature_dim
         self.dprate = 0.2
         self.scale = scale
         self.set_model()
-        print('aefit 1 configured')
+        print('AEFIT1 ready:')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim

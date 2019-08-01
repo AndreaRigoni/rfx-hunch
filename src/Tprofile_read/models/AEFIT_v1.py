@@ -19,6 +19,7 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
 import ipysh
+from models.base import VAE
 
 """
 .##.....##..#######..########..########.##......
@@ -33,7 +34,7 @@ import ipysh
 
 
 
-class AEFIT_v1(tf.keras.Model):
+class AEFIT_v1(VAE):
     ''' General Autoencoder Fit Model for TF 1.x
     '''
 
@@ -125,23 +126,18 @@ class AEFIT_v1(tf.keras.Model):
 
 
 
-
-def compute_gradients(model, x):
-    with tf.GradientTape() as tape:
-        loss = model.compute_loss(x)
-    return tape.gradient(loss, model.trainable_variables), loss
-
-def apply_gradients(optimizer, gradients, variables):
-    return optimizer.apply_gradients(zip(gradients, variables))
-
-
-
-
-
 def test_dummy(model, data, epoch=10, batch=400, learning_rate=1e-3):    
     import seaborn as sns
     import Dummy_g1data as g1
     from sklearn.cluster import KMeans
+
+    def compute_gradients(model, x):
+        with tf.GradientTape() as tape:
+            loss = model.compute_loss(x)
+        return tape.gradient(loss, model.trainable_variables), loss
+
+    def apply_gradients(optimizer, gradients, variables):
+        return optimizer.apply_gradients(zip(gradients, variables))
     
     fig = plt.figure('aefit_test')
     ax1 = fig.add_subplot(121)

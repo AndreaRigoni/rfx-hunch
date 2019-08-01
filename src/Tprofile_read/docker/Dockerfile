@@ -53,3 +53,5 @@ RUN apt install -y jupyter ipython
 # make Jupyter able save to pdf
 # RUN apt install -y pandoc pandoc-citeproc pandoc-data texlive-xetex
 
+COPY treeSetSource /usr/bin/treeSetSource
+RUN  chmod 555 /usr/bin/treeSetSource

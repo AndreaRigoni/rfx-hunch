@@ -21,6 +21,7 @@ import matplotlib.colors as colors
 import ipysh
 import Hunch_utils as Hunch
 
+from models.base import VAE
 
 """
 ..######...#######..##....##.##.....##.......##...########.
@@ -59,10 +60,10 @@ def tf_nan_to_num(x, num=0.):
 .##.....##..#######..########..########.########
 """
 
-class AEFIT1(tf.keras.Model):
+class AEFIT_DUA(VAE):
 
     def __init__(self, feature_dim=100, latent_dim=20, latent_intervals=None):
-        super(AEFIT1, self).__init__()
+        super(AEFIT_DUA, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
         if latent_intervals is None:

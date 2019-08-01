@@ -21,7 +21,7 @@ import matplotlib.colors as colors
 
 import ipysh
 
-
+from models.base import VAE
 
 class Conv1DTranspose(tf.keras.layers.Layer):
   def __init__(self, filters, kernel_size, strides=1, padding='same', activation=None):
@@ -313,19 +313,19 @@ class RollNanLayer(tf.keras.layers.Layer):
 .##.....##..#######..########..########.########
 """
 
-class AEFIT(tf.keras.Model):
+class AEFIT0(VAE):
     ''' General Autoencoder Fit Model for TF 2.0
     '''
     
     def __init__(self, feature_dim=40, latent_dim=2, latent_intervals=None, dprate = 0., scale=1, activation=tf.nn.relu):
-        super(AEFIT, self).__init__()
+        super(AEFIT0, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
         self.dprate = dprate
         self.scale = scale
         self.activation = activation
         self.set_model()
-        print('aefit 0 configured new')
+        print('AEFIT0 ready:')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim

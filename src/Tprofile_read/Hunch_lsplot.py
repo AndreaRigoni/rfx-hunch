@@ -3,14 +3,13 @@ from __future__ import division
 from __future__ import print_function
 
 import Hunch_utils as Htils
-import models.AEFIT as AEFIT
 import Dummy_g1data
 
 import numpy as np
 import tensorflow as tf
 import abc
 
-
+import models
 
 class LSPlot():
     __metaclass__ = abc.ABCMeta    
@@ -107,7 +106,7 @@ class LSPlotBokeh(LSPlot):
 
     def set_data(self, data, counts=200):
         super(LSPlotBokeh, self).set_data(data)
-        md = self._model
+        model = self._model
         ds = self._data
         self._cold = []
         if isinstance(ds, Dummy_g1data.Dummy_g1data):
@@ -123,13 +122,26 @@ class LSPlotBokeh(LSPlot):
 
         ds = self._data.ds_array.prefetch(counts).batch(counts)
         ts,_ = ds.make_one_shot_iterator().get_next()
-        if md.latent_dim == 2:
-            m,v = md.encode(ts)
-            z = md.reparameterize(m,v)
-            data=dict( mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
-                       vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
-                       zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
-            self._data_ls.data = data
+        
+        ## IS VAE
+        if issubclass(type(model), models.VAE):
+            if model.latent_dim == 2:
+                m,v = model.encode(ts)
+                z = model.reparameterize(m,v)
+                data=dict(  mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
+                            vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
+                            zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
+                self._data_ls.data = data
+        
+        ## IS GAN
+        elif issubclass(type(model), models.GAN):
+            if model.latent_dim == 2:
+                m = v = z = model.encode(ts)
+                data=dict(  mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
+                            vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
+                            zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
+                self._data_ls.data = data
+
 
     def plot_generative(self, x, y):
         md = self._model

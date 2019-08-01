@@ -71,7 +71,7 @@ t_end = 0.14
 correction = 1
 
 rs_1_7 =       mds.Data.execute("spectrum( 0 , %6.4f, %6.4f, .0005, -7, 1,  0, %d, 1 )" % (t_start, t_end, correction ) )
-absBr_rs_1_7 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1,  3, %d, 1 )"  % (t_start, t_end, correction ) )
+absBr_rs_1_7 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1,  3, %d, 1 )" % (t_start, t_end, correction ) )
 argBr_rs_1_7 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1, -3, %d, 1 )" % (t_start, t_end, correction ) )
 
 absBt_rm_1_7 = mds.Data.execute("spectrum( 1 , %6.4f, %6.4f, .0005, -7, 1,  1, %d, 1 )" % (t_start, t_end, correction ) )

@@ -2,21 +2,84 @@ import numpy as np
 from scipy.io import readsav
 import sys,os
 
+from Hunch_utils import * 
+
+
+
+def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5, mode_n=range(7,17), mode_m=1, correction=3):
+	import MDSplus as mds
+	tree = None
+	if connection is None:
+		cn = mds.Connection(server)
+		tree = cn.openTree('RFX', shot)
+	else:
+		cn = connection
+	
+	# convert to [ms]*E-1  decimi di millisecondo
+	t0 = float(t0)*1E-4
+	t1 = float(t1)*1E-4
+	dt = float(dt)*1E-4
+
+	m = mode_m
+	class Spectrum(Struct):
+		n           = [np.nan] * len(mode_n)
+		m           = [np.nan] * len(mode_n)
+		rs          = [np.nan] * len(mode_n)
+		dimof       = [np.nan] * len(mode_n)
+		absBt_rm    = [np.nan] * len(mode_n)
+		argBt_rm    = [np.nan] * len(mode_n)
+		absBr_rm    = [np.nan] * len(mode_n)
+		argBr_rm    = [np.nan] * len(mode_n)
+		absBt_rs    = [np.nan] * len(mode_n)
+		argBt_rs    = [np.nan] * len(mode_n)
+		absBr_rs    = [np.nan] * len(mode_n)
+		argBr_rs    = [np.nan] * len(mode_n)
+		absBr_rp    = [np.nan] * len(mode_n)
+		argBr_rp    = [np.nan] * len(mode_n)
+		absBr_max   = [np.nan] * len(mode_n)
+		absFlux_max = [np.nan] * len(mode_n)
+
+	data = Spectrum()
+	
+	n1 = min(mode_n)
+	n2 = max(mode_n)
+	# precalculate code variables for all toroidal modes from n1 to n2
+	# print("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   0, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2) )
+	cn.get("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   0, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2 ) )
+	for i,n in enumerate(mode_n):
+		data.n          [i] = int(n)
+		data.m          [i] = int(m)
+		data.rs         [i] = cn.get("_a = spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  0, %d, 1); _a" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.dimof      [i] = np.rint(cn.get("dim_of(_a)")	* 1E4)
+		data.absBt_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   1, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBt_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -1, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBr_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   2, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBr_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -2, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBt_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBt_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBr_rp   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  12, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBr_rp   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d, -12, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBr_max  [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   5, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absFlux_max[i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   6, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+
+	if tree is not None:
+		tree.close()
+	return data
+
+
+
 
 
 def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 	file = 'dsx3_%d.sav' % shot
-	# print (file)
-	#shot = 30008
-	#file = r'shot_dsx3_%d.sav' % shot
-
 	try:
 		x = readsav( data_dir+file, python_dict=False ).st
 		# x = readsav( data_dir+file, python_dict=True )
 	except:
 		print ("file not found: ", file)
 		sys.exit(0)
-
 
 	n_qsh = x.n_qsh[0]
 	t_qsh_begin = np.atleast_1d( x.t1_arr[0]*1E-3 )
@@ -37,6 +100,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 
 	# (fieldname, datatype, shape)
 	sample_dtype = np.dtype( [ ('label','S10'),
+							('pulse', np.int32),
+							('start', np.int32),
 							('i_qsh', np.int32 ), 
 							('tbordo','>f4' ),
 							('tcentro','>f4' ),
@@ -46,6 +111,26 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 							('prel','>f4', (20,) ),
 							('rho','>f4', (20,) ),
 							('te','>f4', (20,) ),
+							
+							# SHEq map
+							('mapro','>f4', (51,51) ),
+							('xxg','>f4', (51,) ),
+							('yyg','>f4', (51,) ),
+
+							# Spectrum
+							('n', '>i4', (10,) ),
+							('absBt_rm', '>f4', (10,)),
+							('argBt_rm', '>f4', (10,)),
+							('absBr_rm', '>f4', (10,)),
+							('argBr_rm', '>f4', (10,)),
+							('absBt_rs', '>f4', (10,)),
+							('argBt_rs', '>f4', (10,)),
+							('absBr_rs', '>f4', (10,)),
+							('argBr_rs', '>f4', (10,)),
+							('absBr_rp', '>f4', (10,)),
+							('argBr_rp', '>f4', (10,)),
+							('absBr_max', '>f4', (10,)),
+							('absFlux_max', '>f4', (10,)),
 						] )
 
 	n_times_tot = 0
@@ -55,9 +140,12 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 	q_data = np.empty( n_times_tot, dtype=sample_dtype )
 
 	i_time = 0
-	i_qsh = 0
+	i_qsh  = 0
 	for qsh in qshs : 
 		n_times = qsh.tempi[0].shape[0]
+		t0 = np.rint(np.min(qsh.tempi[0])*1E4)
+		t1 = np.rint(np.max(qsh.tempi[0])*1E4)
+		spectrum = read_spectrum(shot, t0=t0, t1=t1)
 
 		for k_time in np.arange( n_times ) :
 			tx = qsh.tempi[0][k_time]
@@ -69,6 +157,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			#print label
 			
 			q_data[i_time]['label'] = label
+			q_data[i_time]['pulse'] = shot
+			q_data[i_time]['start'] = tttt
 			q_data[i_time]['i_qsh'] = i_qsh
 			
 			te_ok = qsh.te3[0][k_time,:] > 0
@@ -83,6 +173,41 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			q_data[i_time]['pos'] = qsh.pos2[0][k_time]
 			q_data[i_time]['grad'] = qsh.grad2[0][k_time]
 
+			# SHEq
+			q_data[i_time]['mapro'] = qsh.mapro[0][k_time]
+			q_data[i_time]['xxg'] = qsh.xxg[0]
+			q_data[i_time]['yyg'] = qsh.yyg[0]
+
+			# spectrum
+			spid = list(spectrum.dimof[0]).index(tttt)
+			q_data[i_time]['n'] = 0 
+			q_data[i_time]['absBt_rm'][:] = np.nan
+			q_data[i_time]['argBt_rm'][:] = np.nan
+			q_data[i_time]['absBr_rm'][:] = np.nan
+			q_data[i_time]['argBr_rm'][:] = np.nan
+			q_data[i_time]['absBt_rs'][:] = np.nan
+			q_data[i_time]['argBt_rs'][:] = np.nan
+			q_data[i_time]['absBr_rs'][:] = np.nan
+			q_data[i_time]['argBr_rs'][:] = np.nan
+			q_data[i_time]['absBr_rp'][:] = np.nan
+			q_data[i_time]['argBr_rp'][:] = np.nan
+			q_data[i_time]['absBr_max'][:] = np.nan
+			q_data[i_time]['absFlux_max'][:] = np.nan
+
+			q_data[i_time]['n'][:len(spectrum.n)] = spectrum.n
+			q_data[i_time]['absBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rm)[spid]
+			q_data[i_time]['argBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rm)[spid]
+			q_data[i_time]['absBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rm)[spid]
+			q_data[i_time]['argBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rm)[spid]
+			q_data[i_time]['absBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rs)[spid]
+			q_data[i_time]['argBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rs)[spid]
+			q_data[i_time]['absBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rs)[spid]
+			q_data[i_time]['argBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rs)[spid]
+			q_data[i_time]['absBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rp)[spid]
+			q_data[i_time]['argBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rp)[spid]
+			q_data[i_time]['absBr_max'][:len(spectrum.n)] = np.transpose(spectrum.absBr_max)[spid]
+			q_data[i_time]['absFlux_max'][:len(spectrum.n)] = np.transpose(spectrum.absFlux_max)[spid]
+			
 			i_time += 1
 		
 		i_qsh += 1
@@ -91,23 +216,30 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 
 # ------------------------------------------------------------------------------
 
-from glob import glob
+fail_shots = [29961]
 
-abs_srcdir = os.environ.get('abs_top_srcdir')
-data_dir = abs_srcdir + '/data/gobbin_db/'
+def create_db():
+	from glob import glob
 
-file_list = glob( data_dir+r'dsx3*')
+	abs_srcdir = os.environ.get('abs_top_srcdir')
+	data_dir = abs_srcdir + '/data/gobbin_db/'
+	file_list = glob( data_dir+r'dsx3*')
 
-q_list = []
-n_shots = 0
-for fname in file_list :
-	shot_char_pos = fname.find( r'dsx3_' )+5
-	shot = np.int( fname[shot_char_pos:shot_char_pos+5] )
-	# print shot
-	q_list.append( read_te_prof( shot, data_dir ) )
-	n_shots +=1
+	q_list = []
+	n_shots = 0	
+	for fname in file_list[78:]:
+		shot_char_pos = fname.find( r'dsx3_' )+5
+		shot = np.int( fname[shot_char_pos:shot_char_pos+5] )
+		if shot not in fail_shots:
+			q_list.append( read_te_prof( shot, data_dir ) )
+			n_shots +=1
 
-q_all_data = np.concatenate( q_list )
+	q_all_data = np.concatenate( q_list )
 
-np.save( 'te_db_1', q_all_data, allow_pickle=False )
-print ('Saved %d profiles from %d shots.' % ( q_all_data.shape[0], n_shots ))
+	np.save( 'te_db_2', q_all_data, allow_pickle=False )
+	print ('Saved %d profiles from %d shots.' % ( q_all_data.shape[0], n_shots ))
+
+
+# if __name__ == '__main__':
+# 	create_db()
+

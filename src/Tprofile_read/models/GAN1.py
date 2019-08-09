@@ -108,10 +108,10 @@ When the input of leakyrelu activation function is negative, the activation valu
 ..######...##.....##.##....##
 """
 
-class GAN0(GAN):
+class GAN1(GAN):
 
     def __init__(self, feature_dim=40, latent_dim=2, dprate = 0., scale=1, activation=tf.nn.relu, beta=1.):
-        super(GAN0, self).__init__()
+        super(GAN1, self).__init__()
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim
         self.dprate = dprate
@@ -121,7 +121,7 @@ class GAN0(GAN):
 
         self.set_model()
         self.set_optimizers()
-        print('GAN0 ready:')
+        print('GAN1 ready:')
 
 
     def set_optimizers(self, opt=tf.keras.optimizers.Adam, dfactor=1e-3):
@@ -156,7 +156,7 @@ class GAN0(GAN):
             tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(feature_dim * 10 * scale),
             tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Dense(1),
+            tf.keras.layers.Dense(latent_dim),
         ] )
 
         # # ## GENERATION ##
@@ -180,25 +180,39 @@ class GAN0(GAN):
             tf.keras.layers.Flatten(),
         ] )
 
+        ## DISCRIMINATOR ##
+        self.discriminator_net = tf.keras.Sequential([            
+            tf.keras.layers.Input(shape=(latent_dim,)),
+            tf.keras.layers.LeakyReLU(),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 10 * scale),
+            tf.keras.layers.LeakyReLU(),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(1),
+        ])
 
         self.inference_net.build()
         self.generative_net.build()
+        self.discriminator_net.build()
 
 
-    def encode(self, x, training=True):
+    def encode(self, x, training=False):
         return self.inference_net(x, training=training)
 
-    def decode(self, s, apply_sigmoid=True, training=True):
+    def decode(self, s, apply_sigmoid=False, training=False):
         y = self.generative_net(s, training=training)
+        # if apply_sigmoid:
+        #     y = tf.sigmoid(y)
         return y
 
     def discriminate(self, x, training=True):
-        return self.encode(x, training=training)        
+        s = self.encode(x, training=training)
+        return self.discriminator_net(s, training=training)
 
     # Notice the use of `tf.function`
     # This annotation causes the function to be "compiled".
     @tf.function
-    def train_step(self, data, training=True):
+    def train_step(self, data):
         # generator_optimizer = self.optimizers[0]
         # discriminator_optimizer = self.optimizers[1]
         batch_size = tf.shape(data)[0]
@@ -223,11 +237,10 @@ class GAN0(GAN):
             gen_loss  = generator_loss(fake_output)
             disc_loss = discriminator_loss(real_output, fake_output)
 
-        if training:
-            gradients_of_generator = gen_tape.gradient(gen_loss, self.generative_net.trainable_variables)
-            gradients_of_discriminator = disc_tape.gradient(disc_loss, self.inference_net.trainable_variables)
-            self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.generative_net.trainable_variables))
-            self.dis_optimizer.apply_gradients(zip(gradients_of_discriminator, self.inference_net.trainable_variables))
+        gradients_of_generator = gen_tape.gradient(gen_loss, self.generative_net.trainable_variables)
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables)
+        self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.generative_net.trainable_variables))
+        self.dis_optimizer.apply_gradients(zip(gradients_of_discriminator, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables))
         
         return tf.reduce_sum([gen_loss, disc_loss])
 
@@ -244,7 +257,7 @@ class GAN0(GAN):
             ts_loss = 0
             for data in ds.batch(batch):
                 x,_ = data
-                ts_loss = self.train_step(x, training=False)
+                ts_loss += self.train_step(x)
             print("test loss: ",ts_loss.numpy())
 
         for e in range(epoch):

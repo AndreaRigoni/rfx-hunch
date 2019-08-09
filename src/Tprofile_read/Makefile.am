@@ -31,7 +31,7 @@ tf-init: ##@tf build process
 tf-init: DOCKER_IMAGE = tf-devel-py3
 tf-init: DOCKER_URL = $(srcdir)/docker
 tf-init: DOCKER_MOUNTS = dist-packages:/usr/local/lib/python3.6/dist-packages
-tf-init: DOCKER_PORTS = 8888:8888
+tf-init: DOCKER_PORTS = 8888:8888 6006:6006
 tf-init: pip-install | tensorflow_src
 	@ :; 
 
@@ -72,9 +72,9 @@ export rfx_ver = inProgress
 
 # automatically reload the following files (this works only if 'ipysh' has been imported too)
 export IPY_AIMPORT = Hunch_utils \
+					 Dummy_g1data \
 					 Hunch_lsplot \
-					 models \
-					 Dummy_g1data
+					 Hunch_tSNEplot
 
 
 DOCKER_TARGETS += te_db_1.npy
@@ -95,6 +95,11 @@ DOCKER_TARGETS += jupyter
 jupyter: DOCKER_CONTAINER = tf-build
 jupyter: ##@jp start jupyter server on jpnb $(srcdir) folder
 	@ $(RUN_PREQUEL) jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=$(abs_srcdir)/jpnb
+
+DOCKER_TARGETS += jupyter-lab
+jupyter-lab: DOCKER_CONTAINER = tf-build
+jupyter-lab: ##@jp start jupyter server on jpnb $(srcdir) folder
+	@ $(RUN_PREQUEL) jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=$(abs_srcdir)/jpnb
 
 
 DOWNLOADS += rdipietro

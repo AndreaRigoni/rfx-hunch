@@ -55,3 +55,4 @@ RUN apt install -y jupyter ipython
 
 COPY treeSetSource /usr/bin/treeSetSource
 RUN  chmod 555 /usr/bin/treeSetSource
+

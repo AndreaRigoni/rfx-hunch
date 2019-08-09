@@ -18,20 +18,16 @@ import Dummy_g1data as dummy
 import models.AEFIT0 as aefit
 
 # ipysh.Bootstrap_support.debug()
+import os  
+
+
+qsh1 = Htls.QSH_Dataset()
+qsh1.load('te_db_1.npy')
 
 qsh = Htls.QSH_Dataset()
-
-import os  
-# if os.path.isfile('te_db_2.npy'):    # True  
-#     qsh.load('te_db_2.npy')
-# else:
-#     qsh.load('te_db_1.npy')
-#     qsh.set_null(np.nan)
-#     qsh.rebalance_prel()
-#     qsh.save('te_db_2.npy')
-
-qsh.load('te_db_1.npy')
-
+qsh.dim = 15
+qsh.load(ipysh.abs_builddir+'/te_db_r15_clean.npy')
+qsh.set_null(np.nan)
 
 
 

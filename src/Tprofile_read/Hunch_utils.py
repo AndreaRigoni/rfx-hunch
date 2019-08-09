@@ -474,6 +474,11 @@ class QSH_Dataset(Dataset):
         else:
             return np.rec.array(self._dataset[self._range])
 
+    @property
+    def dictionary(self):
+        a = self.data
+        return {name:a[name] for name in a.dtype.names}
+
     def __len__(self):
         return len(self._dataset)
             

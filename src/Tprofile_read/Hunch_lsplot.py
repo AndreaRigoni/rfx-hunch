@@ -29,6 +29,9 @@ class LSPlot():
         self._cfg = LSPlot.CfgDict({
             'sample_size': 100,
         }) + argd
+        self._model = None
+        self._data  = None
+
 
     def set_model(self, model):
         # assert isinstance(model, AEFIT.Hunch_VAE), "Input variables should be AEFIT"
@@ -41,12 +44,19 @@ class LSPlot():
 
 
 class LSPlotBokeh(LSPlot):
-    from bokeh.io import show, output_notebook    
+    from bokeh.io import show, output_notebook, push_notebook
     from bokeh import events
-    from bokeh.models import CustomJS, Div, Button, Slider
-    from bokeh.models import CustomJS, ColumnDataSource, Slider, TextInput    
+    from bokeh.models import CustomJS, Div, Button, Slider, Toggle
+    from bokeh.models import CustomJS, ColumnDataSource, Slider, TextInput, Range1d  
     from bokeh.layouts import column, row
     from bokeh.plotting import figure
+    from bokeh.document import without_document_lock
+
+    from bokeh.models import (
+        LinearColorMapper,
+        LogColorMapper,
+    )
+    from bokeh.palettes import PuBu, OrRd, RdBu
 
     ## Events with attributes
     point_attributes = ['x', 'y', 'sx', 'sy']                  # Point events
@@ -64,12 +74,14 @@ class LSPlotBokeh(LSPlot):
 
     def __init__(self, *argv, **argd):
         super(LSPlotBokeh,self).__init__(*argv,**argd)
-        self._figure_ls = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset,crosshair")
-        self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
-        self._div = LSPlotBokeh.Div(width=200, height=400, height_policy="fixed")
-        self._layout = LSPlotBokeh.row(self._figure_ls,self._figure_gn, self._div)        
+        self._target = None
+        self._doc = None
 
-        # trace mouse position        
+        self._figure_ls = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,box_zoom,zoom_in,zoom_out,reset,crosshair")
+        self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
+        self._div = LSPlotBokeh.Div(width=800, height=10, height_policy="fixed")        
+
+        # trace mouse position
         self._inx = LSPlotBokeh.TextInput(value='')
         self._pos = LSPlotBokeh.ColumnDataSource(data=dict(x=[0],y=[0],dim=[0]))        
         def posx_cb(attr, old, new):
@@ -77,13 +89,20 @@ class LSPlotBokeh(LSPlot):
             x,y = [float(x.strip()) for x in new.split(',')]
             pos.data['x'][0] = x
             pos.data['y'][0] = y
-            self.plot_generative(x,y)
+            self._doc.add_next_tick_callback(lambda: self.plot_generative(x,y))            
         self._inx.on_change('value',posx_cb)
         
+        # COLOR MAPPERS
+        self._mapper1 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.PuBu[9], low=0, high=1)
+        self._mapper2 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.OrRd[9], low=0, high=1)
+        self._mapper3 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.RdBu[9], low=0, high=1)
+
         # LS PLOT
-        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],zx=[],zy=[]))
-        self._figure_ls.scatter('mx','my',source=self._data_ls)
-        self._figure_ls.scatter('zx','zy',source=self._data_ls,color='grey')
+        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[]) )
+        self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)
+        self._figure_ls.circle('mx','my',name='ls', legend='ls', size=10,source=self._data_ls, alpha=0.5, line_width=0,
+                                fill_color={'field': 'tcentro', 'transform': self._mapper3})
+        
         for event in LSPlotBokeh.point_events:
             self._figure_ls.js_on_event(event, self.display_event(self._div, attributes=LSPlotBokeh.point_attributes))
 
@@ -91,11 +110,32 @@ class LSPlotBokeh(LSPlot):
         self._data_gn = LSPlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
         self._figure_gn.line('x','y', source=self._data_gn)
         self._figure_gn.scatter('x','y', source=self._data_gn)
+
+        # WIDGETS #
+        self._b1 = LSPlotBokeh.Button(label="Update ls", button_type="success", width=150)
+        self._b1.on_click(self.update_ls)
+        self._b2 = LSPlotBokeh.Button(label="Plasma Ic", width=150)
+        self._b2.on_click(lambda: self._figure_ls.select(name='ls'))
+
+        self._layout = LSPlotBokeh.column( 
+            LSPlotBokeh.row(self._figure_ls,self._figure_gn,
+                LSPlotBokeh.column(
+                    self._b1,
+                    self._b2,
+                )),
+            #LSPlotBokeh.row(self._div)
+        )
     
     def plot(self, notebook_url='http://172.17.0.2:8888'):
+        self.plot_notebook(notebook_url)
+
+    def plot_notebook(self, notebook_url='http://localhost:8888'):
+        from bokeh.io import output_notebook
+        output_notebook()
         def plot(doc):
+            self._doc = doc
             doc.add_root(self._layout)
-        LSPlotBokeh.show(plot, notebook_url=notebook_url)
+        self._target = LSPlotBokeh.show(plot, notebook_url=notebook_url, notebook_handle=True)
 
     # def html(self, filename=None):
     #     from bokeh.io import save, output_file
@@ -104,55 +144,81 @@ class LSPlotBokeh(LSPlot):
     #     output_file(filename)
     #     save(self._layout)
 
+    
     def set_data(self, data, counts=200):
         super(LSPlotBokeh, self).set_data(data)
-        model = self._model
+        self._counts = counts
+        self._cold = []        
         ds = self._data
-        self._cold = []
         if isinstance(ds, Dummy_g1data.Dummy_g1data):
             # from bokeh.palettes import Category10
             # import itertools
             # colors = itertools.cycle(Category10[10])
             dx = 1/ds._size
             x = np.linspace(0+dx/2,1-dx/2,ds._size)  # spaced x axis
-            for i,k in enumerate(ds.kinds,0):
+            for i,_ in enumerate(ds.kinds,0):
                 xy,_ = ds.gen_pt(id=0, x=x, kind=i)
                 self._cold.append( LSPlotBokeh.ColumnDataSource(data=dict(x=xy[:,0],y=xy[:,1]))  )
                 self._figure_gn.line('x','y',source=self._cold[i], line_width=3, line_alpha=0.6, color='red')
+        if self._model is not None:
+            self.update_ls()
 
-        ds = self._data.ds_array.prefetch(counts).batch(counts)
+    def update(self):
+        if self._model is not None and self._data is not None:
+            self.update_ls()
+            LSPlotBokeh.push_notebook(handle=self._target)
+
+    @without_document_lock
+    def update_ls(self):
+        model = self._model
+        counts = self._counts
+        ds   = self._data.ds_array.prefetch(counts).batch(counts).take(1)
+        dc   = self._data[0:counts]
         ts,_ = ds.make_one_shot_iterator().get_next()
-        
+
+        def normalize(data):
+            return (data - np.min(data)) / (np.max(data) - np.min(data))
         ## IS VAE
-        if issubclass(type(model), models.VAE):
+        if issubclass(type(model), models.base.VAE):
             if model.latent_dim == 2:
-                m,v = model.encode(ts)
+                m,v = model.encode(ts, training=False)
                 z = model.reparameterize(m,v)
-                data=dict(  mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
-                            vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
-                            zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
-                self._data_ls.data = data
+                v = tf.exp(0.5 * v) * 500.
+                data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
+                            vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
+                            v_sum=(v[:,0].numpy()+v[:,1].numpy()),
+                            zx=z[:,0].numpy(), zy=z[:,1].numpy(),
+                            tcentro=normalize(dc['tcentro'])
+                            )
+                self._data_ls.data = data                
         
         ## IS GAN
-        elif issubclass(type(model), models.GAN):
+        elif issubclass(type(model), models.base.GAN):
             if model.latent_dim == 2:
-                m = v = z = model.encode(ts)
-                data=dict(  mx=m[:,0].numpy().tolist(), my=m[:,1].numpy().tolist(),
-                            vx=v[:,0].numpy().tolist(), vy=v[:,1].numpy().tolist(),
-                            zx=z[:,0].numpy().tolist(), zy=z[:,1].numpy().tolist()  )
+                self._figure_ls.x_range=LSPlotBokeh.Range1d(-5,5)
+                self._figure_ls.y_range=LSPlotBokeh.Range1d(-5,5)
+                # m = v = model.encode(ts, training=False)
+                z = m = v = tf.random.normal(tf.shape(ts))
+                data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
+                            vx=v[:,0].numpy(), vy=v[:,1].numpy(),
+                            v_sum=(v[:,0].numpy()+v[:,1].numpy()),
+                            zx=z[:,0].numpy(), zy=z[:,1].numpy(),
+                            tcentro=normalize(dc['tcentro'])
+                            )       
                 self._data_ls.data = data
+                
 
 
     def plot_generative(self, x, y):
         md = self._model
-        XY = md.decode(tf.convert_to_tensor([[x,y]]), apply_sigmoid=True)
+        XY = md.decode(tf.convert_to_tensor([[x,y]]), training=False, apply_sigmoid=True)
         X,Y = tf.split(XY[0], 2)
-        data = dict( x=X.numpy().tolist(), y=Y.numpy().tolist() )
+        data = dict( x=X.numpy(), y=Y.numpy() )
         self._data_gn.data = data
 
     def display_event(self, div, attributes=[], style = 'float:left;clear:left;font_size=10pt'):
         "Build a suitable CustomJS to display the current event in the div model."
-        return LSPlotBokeh.CustomJS(args=dict(div=div, pos=self._pos, inx=self._inx), code="""
+        return LSPlotBokeh.CustomJS(args=dict(div=div, inx=self._inx), code="""
             var attrs = %s; var args = [];
             for (var i = 0; i<attrs.length; i++)
                 args.push(attrs[i] + '=' + Number(cb_obj[attrs[i]]).toFixed(2));

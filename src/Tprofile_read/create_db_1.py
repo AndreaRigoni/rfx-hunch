@@ -6,15 +6,16 @@ from Hunch_utils import *
 
 
 
+
 def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5, mode_n=range(7,17), mode_m=1, correction=3):
 	import MDSplus as mds
 	tree = None
 	if connection is None:
 		cn = mds.Connection(server)
-		tree = cn.openTree('RFX', shot)
 	else:
-		cn = connection
-	
+		cn = connection		
+	tree = cn.openTree('RFX', shot)
+
 	# convert to [ms]*E-1  decimi di millisecondo
 	t0 = float(t0)*1E-4
 	t1 = float(t1)*1E-4
@@ -112,6 +113,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 							('rho','>f4', (20,) ),
 							('te','>f4', (20,) ),
 							
+							('Ip','>f4', (20,) ),
+							
 							# SHEq map
 							('mapro','>f4', (51,51) ),
 							('xxg','>f4', (51,) ),
@@ -172,6 +175,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			q_data[i_time]['tcentro'] = qsh.tcentro[0][k_time]
 			q_data[i_time]['pos'] = qsh.pos2[0][k_time]
 			q_data[i_time]['grad'] = qsh.grad2[0][k_time]
+			
+			
 
 			# SHEq
 			q_data[i_time]['mapro'] = qsh.mapro[0][k_time]

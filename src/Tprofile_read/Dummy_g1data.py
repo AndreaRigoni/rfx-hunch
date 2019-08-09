@@ -23,7 +23,7 @@ class Dummy_g1data():
         {'mean': [0.5], 'sigma': [0.2], 'gain': [0.5] },
     ]
 
-    def __init__(self, counts=20, size=20, noise_var=0., nanprob=None, nanmask=None, fixed_nanmask=None):
+    def __init__(self, counts=60000, size=20, noise_var=0., nanprob=None, nanmask=None, fixed_nanmask=None):
         self._counts = counts
         self._size = size
         self._noise = noise_var

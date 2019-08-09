@@ -187,7 +187,7 @@ class AEFIT2(VAE):
         logpz   =  vae_logN_pdf(z, 0., 1.)
         logqz_x =  vae_logN_pdf(z, mean, logv)
         kl_mtc  =  logpz - logqz_x
-        kl_ana  = -0.5 * tf.reduce_mean(logv - tf.square(mean) - tf.exp(logv) + 1, axis=1)        
+        kl_ana  = -0.5 * tf.reduce_sum(logv - tf.square(mean) - tf.exp(logv) + 1, axis=1)        
         l_vae   = -tf.reduce_mean(self.beta * logpx_z + kl_mtc)/self.beta
         #
         return l_vae

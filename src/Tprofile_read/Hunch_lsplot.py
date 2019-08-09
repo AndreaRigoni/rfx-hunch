@@ -182,7 +182,7 @@ class LSPlotBokeh(LSPlot):
         if issubclass(type(model), models.base.VAE):
             if model.latent_dim == 2:
                 m,v = model.encode(ts, training=False)
-                z = model.reparameterize(m,v)
+                z = model.reparametrize(m,v)
                 v = tf.exp(0.5 * v) * 500.
                 data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
                             vx=v[:,0].numpy(), vy=v[:,1].numpy(), 

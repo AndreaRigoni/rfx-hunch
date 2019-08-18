@@ -56,7 +56,7 @@ class LSPlotBokeh(LSPlot):
         LinearColorMapper,
         LogColorMapper,
     )
-    from bokeh.palettes import PuBu, OrRd, RdBu
+    from bokeh.palettes import PuBu, OrRd, RdBu, Category20
 
     ## Events with attributes
     point_attributes = ['x', 'y', 'sx', 'sy']                  # Point events
@@ -96,15 +96,37 @@ class LSPlotBokeh(LSPlot):
         self._mapper1 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.PuBu[9], low=0, high=1)
         self._mapper2 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.OrRd[9], low=0, high=1)
         self._mapper3 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.RdBu[9], low=0, high=1)
+        self._mapper3 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.RdBu[9], low=0, high=1)
+        self._mapper4 = LSPlotBokeh.LinearColorMapper(palette=LSPlotBokeh.Category20[20], low=0, high=20)
+
 
         # LS PLOT
-        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[]) )
-        self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)
-        self._figure_ls.circle('mx','my',name='ls', legend='ls', size=10,source=self._data_ls, alpha=0.5, line_width=0,
-                                fill_color={'field': 'tcentro', 'transform': self._mapper3})
-        
+        self._ls_glyphs = []
+        def toggle_ls_glyphs(name = None):
+            for g in self._ls_glyphs: g.visible = False                
+            if name: self._figure_ls.select(name=name).visible = True
+
+        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],label=[]) )
+        self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)        
+        self._ls_glyphs += [self._figure_ls.circle('mx','my',name='Tc', legend='Tc',
+                                                        size=10, 
+                                                        source=self._data_ls, 
+                                                        alpha=0.5, 
+                                                        line_width=0,
+                                                        fill_color={'field': 'tcentro', 'transform': self._mapper3}
+                                                        )]
+        self._ls_glyphs += [self._figure_ls.circle('mx','my',name='label', legend='label',
+                                                        size=10, 
+                                                        source=self._data_ls, 
+                                                        alpha=0.5, 
+                                                        line_width=0,
+                                                        fill_color={'field': 'label', 'transform': self._mapper4}
+                                                        )]
+        self._figure_ls.legend[0].visible = False
+        toggle_ls_glyphs(None)
         for event in LSPlotBokeh.point_events:
             self._figure_ls.js_on_event(event, self.display_event(self._div, attributes=LSPlotBokeh.point_attributes))
+
 
         # NG PLOT        
         self._data_gn = LSPlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
@@ -114,14 +136,17 @@ class LSPlotBokeh(LSPlot):
         # WIDGETS #
         self._b1 = LSPlotBokeh.Button(label="Update ls", button_type="success", width=150)
         self._b1.on_click(self.update_ls)
-        self._b2 = LSPlotBokeh.Button(label="Plasma Ic", width=150)
-        self._b2.on_click(lambda: self._figure_ls.select(name='ls'))
+        self._b2 = LSPlotBokeh.Button(label="Plasma Tc", width=150)
+        self._b2.on_click(lambda: toggle_ls_glyphs('Tc'))
+        self._b3 = LSPlotBokeh.Button(label="label", width=150)
+        self._b3.on_click(lambda: toggle_ls_glyphs('label'))
 
         self._layout = LSPlotBokeh.column( 
             LSPlotBokeh.row(self._figure_ls,self._figure_gn,
                 LSPlotBokeh.column(
                     self._b1,
                     self._b2,
+                    self._b3,
                 )),
             #LSPlotBokeh.row(self._div)
         )
@@ -157,7 +182,7 @@ class LSPlotBokeh(LSPlot):
             dx = 1/ds._size
             x = np.linspace(0+dx/2,1-dx/2,ds._size)  # spaced x axis
             for i,_ in enumerate(ds.kinds,0):
-                xy,_ = ds.gen_pt(id=0, x=x, kind=i)
+                xy,_ = ds.gen_pt(x=x, kind=i)
                 self._cold.append( LSPlotBokeh.ColumnDataSource(data=dict(x=xy[:,0],y=xy[:,1]))  )
                 self._figure_gn.line('x','y',source=self._cold[i], line_width=3, line_alpha=0.6, color='red')
         if self._model is not None:
@@ -174,8 +199,8 @@ class LSPlotBokeh(LSPlot):
         counts = self._counts
         ds   = self._data.ds_array.prefetch(counts).batch(counts).take(1)
         dc   = self._data[0:counts]
-        ts,_ = ds.make_one_shot_iterator().get_next()
-
+        dc._counts = counts
+        ts,tl = ds.make_one_shot_iterator().get_next()
         def normalize(data):
             return (data - np.min(data)) / (np.max(data) - np.min(data))
         ## IS VAE
@@ -188,7 +213,8 @@ class LSPlotBokeh(LSPlot):
                             vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
                             v_sum=(v[:,0].numpy()+v[:,1].numpy()),
                             zx=z[:,0].numpy(), zy=z[:,1].numpy(),
-                            tcentro=normalize(dc['tcentro'])
+                            tcentro=normalize(dc['tcentro']),
+                            label=tl.numpy()
                             )
                 self._data_ls.data = data                
         
@@ -203,7 +229,8 @@ class LSPlotBokeh(LSPlot):
                             vx=v[:,0].numpy(), vy=v[:,1].numpy(),
                             v_sum=(v[:,0].numpy()+v[:,1].numpy()),
                             zx=z[:,0].numpy(), zy=z[:,1].numpy(),
-                            tcentro=normalize(dc['tcentro'])
+                            tcentro=normalize(dc['tcentro']),
+                            label=tl.numpy()
                             )       
                 self._data_ls.data = data
                 

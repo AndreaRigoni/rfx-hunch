@@ -372,7 +372,7 @@ class AEFIT0(VAE):
         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
         return mean, logvar
 
-    def reparameterize(self, mean, logvar):
+    def reparametrize(self, mean, logvar):
         eps = tf.random.normal(shape=mean.shape)
         return eps * tf.exp(logvar * .5) + mean
 
@@ -390,7 +390,7 @@ class AEFIT0(VAE):
         att = tf.math.is_nan(input)
         xy  = tf_nan_to_num(input, 0.)
         mean,logv = self.encode(xy)
-        z = self.reparameterize(mean,logv)
+        z = self.reparametrize(mean,logv)
         XY = self.decode(z)
         XY = tf.where(att, tf.zeros_like(XY), XY)
         #
@@ -462,7 +462,7 @@ def test_dummy(model, data, epoch=40, batch=400, loss_factor=1e-3):
                   
                   m,v = model.encode(X_data)
                   # m,v = model.encode(ts)
-                  z   = model.reparameterize(m,v)
+                  z   = model.reparametrize(m,v)
                   XY  = model.decode(z,apply_sigmoid=True)
                   X,Y = tf.split(XY,2, axis=1)
                   
@@ -496,7 +496,7 @@ def plot_supervised_latent_distributions(model, counts=10000):
     for X in data:
         ds,dl = X
         m,v = model.encode(ds)
-        z   = model.reparameterize(m,v)
+        z   = model.reparametrize(m,v)
         #XY  = model.decode(z,apply_sigmoid=True)
         plt.plot(z[:,0],z[:,1],'.',color=clist[dl%len(clist)])
         count += 1

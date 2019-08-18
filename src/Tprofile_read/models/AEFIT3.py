@@ -98,7 +98,7 @@ class AEFIT3(models.base.VAE):
         self.activation = activation
         self.set_model()
         self.beta = beta
-        print('AEFIT3 pz ready:')
+        print('AEFIT3 ready:')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
@@ -139,8 +139,8 @@ class AEFIT3(models.base.VAE):
         self.inference_net.build()
         self.generative_net.build()
 
-        self.inputs = self.inference_net.inputs
-        self.outputs = self.generative_net.outputs
+        # self.inputs = self.inference_net.inputs
+        # self.outputs = self.generative_net.outputs
         self._sce = 0.
         self._kld = 0.
         self._akl = 0.
@@ -152,22 +152,12 @@ class AEFIT3(models.base.VAE):
             loss = self.vae3_loss,
             metrics = ['accuracy', self.sce, self.akl, self.kld, self.v_mea, self.v_std]
         )
-        self.build(input_shape=self.inference_net.input_shape)
-
-    loss_factor = property()
-    
-    @loss_factor.getter
-    def loss_factor(self):
-        return self.optimizer._get_hyper('learning_rate')
-
-    @loss_factor.setter
-    def loss_factor(self, lf):
-        self.optimizer._set_hyper('learning_rate', lf)
+        # self.build(input_shape=self.inference_net.input_shape)
 
 
 
     @tf.function
-    def reparameterize(self, z_mean, z_log_var):
+    def reparametrize(self, z_mean, z_log_var):
         batch = tf.shape(z_mean)[0]
         dim = tf.shape(z_mean)[1]
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
@@ -197,7 +187,7 @@ class AEFIT3(models.base.VAE):
         att = tf.math.is_nan(xy)
         xy = tf.where(att, tf.zeros_like(xy), xy)
         mean,logvar = self.encode(xy)
-        z = self.reparameterize(mean, logvar)        
+        z = self.reparametrize(mean, logvar)        
         XY = self.decode(z)
         XY = tf.where(att, tf.zeros_like(XY), XY)
         
@@ -210,9 +200,9 @@ class AEFIT3(models.base.VAE):
         akl_loss = -0.5 * tf.reduce_sum(logvar + 1 - tf.square(mean) + tf.exp(logvar)  , axis=1)
 
         # REGULARIZER FOR p(z) #
-        m1,v1     = tf.roll(mean, 1, axis=0), tf.roll(logvar, 1, axis=0)
-        pz        = tf.reduce_mean(vae_N_pdf(z,m1,v1), axis=1)
-        akl_loss -= self.beta * pz
+        # m1,v1     = tf.roll(mean, 1, axis=0), tf.roll(logvar, 1, axis=0)
+        # pz        = tf.reduce_mean(vae_N_pdf(z,m1,v1), axis=1)
+        # akl_loss -= self.beta * pz
 
         # DEBUG
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
@@ -223,7 +213,7 @@ class AEFIT3(models.base.VAE):
         self._kld =  tf.reduce_mean(kl_loss)
         self._akl =  tf.reduce_mean(akl_loss)
         
-        self.add_loss(akl_loss)
+        self.add_loss(self.beta * akl_loss)
         return XY
                 
     def recover(self,x):
@@ -247,7 +237,6 @@ class AEFIT3(models.base.VAE):
     def v_std(self, x, y):
         return self._v_std
 
-
     def vae3_loss(self, xy, XY):
         xy = tf.where(tf.math.is_nan(xy), tf.zeros_like(xy), xy)
         #XY = tf.where(tf.math.is_nan(XY), tf.zeros_like(XY), XY)
@@ -264,3 +253,118 @@ class AEFIT3(models.base.VAE):
 
 
 
+
+
+
+
+
+
+
+
+
+class AEFIT3m(AEFIT3):
+    ''' General Autoencoder Fit Model for TF 2.0
+    '''
+    
+    def __init__(self, feature_dim=40, latent_dim=2, dprate = 0., scale=1, activation=tf.nn.relu, beta=1.):
+        super(AEFIT3m, self).__init__()
+        self.latent_dim = latent_dim
+        self.feature_dim = feature_dim
+        self.dprate = dprate
+        self.scale = scale
+        self.activation = activation
+        self.set_model()
+        self.beta = beta
+        print('AEFIT3m ready:')
+
+    def set_model(self, training=True):
+        feature_dim = self.feature_dim
+        latent_dim = self.latent_dim
+        if training: dprate = self.dprate
+        else: dprate = 0.
+        scale = self.scale
+        activation = self.activation
+        
+        ## INFERENCE ##
+        i_shape = tf.keras.Sequential( [
+            tf.keras.layers.Input(shape=(feature_dim,)),
+            NaNDense(feature_dim, activation=activation),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),
+            ] )
+        i_mean   = tf.keras.layers.Input(shape=(1,))
+        i_concat = tf.keras.layers.Concatenate()([i_mean, i_shape.output])
+        i_out    = tf.keras.layers.Dense(2*latent_dim)(i_concat)
+        self.inference_net = tf.keras.Model(name='inference_net', inputs=[i_mean, i_shape.input], outputs=[i_out])
+        
+
+
+        ## GENERATION ##
+        self.generative_net = tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(latent_dim,)),
+            tf.keras.layers.Dense(units=latent_dim),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(units=feature_dim),
+        ], name = 'generative_net')
+        
+        i_shape.build()
+        self.inference_net.build(input_shape=[-1,feature_dim+1])
+        self.generative_net.build()
+
+        # self.inputs = self.inference_net.inputs
+        # self.outputs = self.generative_net.outputs
+        self._sce = 0.
+        self._kld = 0.
+        self._akl = 0.
+        self._v_mea = 0.
+        self._v_std = 0.
+        # Compile the model
+        self.compile(  
+            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+            loss = self.vae3_loss_m,
+            metrics = ['accuracy', self.sce, self.akl, self.kld, self.v_mea, self.v_std]
+        )
+        # self.build(input_shape=self.inference_net.input_shape)
+
+
+    @tf.function
+    def encode(self, xy, training=True):
+        
+        xy = tf.convert_to_tensor(xy)
+        xy = tf.where(tf.math.is_nan(xy), tf.zeros_like(xy), xy)
+        x,y = tf.split(xy, num_or_size_splits=2, axis=1)
+        m   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
+        xy  = tf.concat([x,y-m+0.5], axis=1)
+        xy  = tf.clip_by_value(xy,0.,1.)
+        mean, logvar = tf.split(self.inference_net([m,xy], training=training), num_or_size_splits=2, axis=1)
+        return mean, logvar
+
+
+    def vae3_loss_m(self, xy, XY):
+        xy = tf.where(tf.math.is_nan(xy), tf.zeros_like(xy), xy)
+        x,y = tf.split(xy, num_or_size_splits=2, axis=1)
+        m   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
+        xy  = tf.concat([x,y-m+0.5], axis=1)
+        xy  = tf.clip_by_value(xy,0.,1.)
+
+        XY = tf.where(tf.math.is_nan(XY), tf.zeros_like(XY), XY)
+        M   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
+        X,Y = tf.split(XY, num_or_size_splits=2, axis=1)
+        XY  = tf.concat([X,Y-M+0.5], axis=1)
+
+        crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
+        logpx_z =  tf.reduce_sum(crossen, axis=[1])
+        l_term =   tf.convert_to_tensor(self.losses)
+        l_vae   =  tf.reduce_mean(logpx_z - l_term )
+        return l_vae  

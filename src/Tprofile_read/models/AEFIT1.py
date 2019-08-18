@@ -332,7 +332,7 @@ class AEFIT1(VAE):
         m,v = self.encode1(X)
         return self.encode2(self.reparametrize1(m,v))
         
-    def reparameterize(self, mean, logvar):
+    def reparametrize(self, mean, logvar):
         return self.reparametrize2(mean,logvar)
 
     def decode(self, s, apply_sigmoid=False):
@@ -418,7 +418,7 @@ def test_dummy(model, data, epoch=40, batch=400, loss_factor=1e-3):
                   print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
                   
                   m,v = model.encode(X_data)
-                  z   = model.reparameterize(m,v)
+                  z   = model.reparametrize(m,v)
                   XY  = model.decode(z,apply_sigmoid=True)
                   X,Y = tf.split(XY,2, axis=1)
                   
@@ -451,7 +451,7 @@ def plot_supervised_latent_distributions(model, counts=10000):
     for X in data:
         ds,dl = X
         m,v = model.encode(ds)
-        z   = model.reparameterize(m,v)
+        z   = model.reparametrize(m,v)
         #XY  = model.decode(z,apply_sigmoid=True)
         plt.plot(z[:,0],z[:,1],'.',color=clist[dl%len(clist)])
         count += 1

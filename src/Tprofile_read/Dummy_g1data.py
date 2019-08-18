@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-
 import tensorflow as tf
 import abc
 
@@ -11,9 +10,11 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
+import copy
+import models.base
 
 
-class Dummy_g1data():
+class Dummy_g1data(models.base.Dataset):
 
     kinds = [
         {'mean': [0.2,0.8], 'sigma': [0.1,0.1], 'gain': [1,1] },        
@@ -22,6 +23,7 @@ class Dummy_g1data():
         {'mean': [0.5], 'sigma': [0.2], 'gain': [1] },
         {'mean': [0.5], 'sigma': [0.2], 'gain': [0.5] },
     ]
+
 
     def __init__(self, counts=60000, size=20, noise_var=0., nanprob=None, nanmask=None, fixed_nanmask=None):
         self._counts = counts
@@ -36,9 +38,63 @@ class Dummy_g1data():
             self._nanprob = np.array(nanprob)
         if fixed_nanmask is not None:
             self._fixed_nanmask = np.array(fixed_nanmask)
+        self._null = np.nan
+        self._dataset = None
+
+
+    def buffer(self, counts = None):
+        if counts is None: counts = self._counts
+        else             : self._counts = counts
+        size = self._size
+        dtype = np.dtype ( [  ('x', '>f4', (size,) ),
+                              ('y', '>f4', (size,) ),
+                              ('l', np.int32),
+                           ] )
+        ds = np.empty([counts], dtype=dtype)
+        for i in range(counts):
+            s_pt,l = self.gen_pt(i)
+            ds[i] = (s_pt[:,0], s_pt[:,1], l)
+        self._dataset = ds
+        return self
     
+    def clear():
+        self._dataset = None
+
     def __len__(self):
         return self._counts
+
+    # return by reference
+    def __getitem__(self, key):
+        assert self._dataset is not None, 'please fill buffer first'
+        if isinstance(key, int):
+            return self._dataset[key]
+        elif isinstance(key, range):
+            return self._dataset[key]
+        elif isinstance(key, slice):
+            ds = copy.deepcopy(self)
+            ds._dataset = self._dataset[key]
+            ds.counts = len(ds._dataset)
+            return ds
+        elif isinstance(key, str):
+            try:    val = self._dataset[:][key]
+            except: val = np.full([self._counts], self._null)
+            return val
+        else:
+            print("not supported index: ",type(key))
+
+    # set by reference
+    def __setitem__(self, key, value):
+        assert self._dataset is not None, 'please fill buffer first'
+        if isinstance(key, int):
+            self._dataset[key] = value
+        elif isinstance(key, range) or isinstance(key, slice):
+            self._dataset[key] = value
+        elif isinstance(key, str):
+            try: self._dataset[:][key] = value
+            except: print('WARNING: field not found')
+        else:
+            print("not supported index: ",type(key))
+
 
     @property
     def dim(self):
@@ -48,34 +104,38 @@ class Dummy_g1data():
     def size(self):
         return self._counts
 
-    def gen_pt(self, id, x=None, kind=None):
+    def gen_pt(self, id=None, x=None, kind=None):
         def gauss(x, m, s, g):
             return np.abs(np.exp(-np.power(x-m, 2.) / (2 * np.power(s, 2.))) * g + np.random.normal(0,self._noise,1))
-        if x is None:
-            x = np.sort(np.random.rand(self._size))
-        y = np.zeros_like(x)        
-        if kind is None:
-            kind = np.random.randint(len(self.kinds))
-        k = self.kinds[kind]
-        if len(np.shape(k['mean'])) > 0:
-            for m,s,g in np.stack([k['mean'],k['sigma'],k['gain']],axis=1):
-                y += gauss(x,m,s,g)
+        if self._dataset is not None and id is not None:
+            data = self._dataset[id]
+            return np.stack([data['x'],data['y']], axis=1), data['l']
         else:
-            y = gauss(x,k['mean'],k['sigma'],k['gain'])
-        
-        mask = np.zeros_like(x)
-        if self._nanprob is not None:
-            mask = np.random.uniform(size=self._size)
-            mask = (mask < self._nanprob).astype(float)
+            if x is None:
+                x = np.sort(np.random.rand(self._size))
+            y = np.zeros_like(x)        
+            if kind is None:
+                kind = np.random.randint(len(self.kinds))
+            k = self.kinds[kind]
+            if len(np.shape(k['mean'])) > 0:
+                for m,s,g in np.stack([k['mean'],k['sigma'],k['gain']],axis=1):
+                    y += gauss(x,m,s,g)
+            else:
+                y = gauss(x,k['mean'],k['sigma'],k['gain'])
+            
+            mask = np.zeros_like(x)
+            if self._nanprob is not None:
+                mask = np.random.uniform(size=self._size)
+                mask = (mask < self._nanprob).astype(float)
 
-        # if self._nanmask is not None:
-        #     mask = self._nanmask & np.random.randint(2, size=self._size)
-        #     if self._fixed_nanmask is not None:
-        #         mask = mask | self._fixed_nanmask
-        
-        x[mask > 0] = np.nan
-        y[mask > 0] = np.nan
-        return np.stack([x,y], axis=1), kind
+            # if self._nanmask is not None:
+            #     mask = self._nanmask & np.random.randint(2, size=self._size)
+            #     if self._fixed_nanmask is not None:
+            #         mask = mask | self._fixed_nanmask
+            
+            x[mask > 0] = np.nan
+            y[mask > 0] = np.nan
+            return np.stack([x,y], axis=1), kind
     
     
     def get_tf_dataset_tuple(self):
@@ -106,7 +166,6 @@ class Dummy_g1data():
         
     ds_tuple = property(get_tf_dataset_tuple)
     ds_array = property(get_tf_dataset_array)
-
 
 
 

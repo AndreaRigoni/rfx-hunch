@@ -19,7 +19,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
-
+import copy
+import models
 
 
 
@@ -427,10 +428,10 @@ class QSH(Struct):
 
 
 
-from models.base import Dataset
-import copy
 
-class QSH_Dataset(Dataset):
+
+
+class QSH_Dataset(models.base.Dataset):
                 
     def __init__(self, dim=20):
         self._dataset = None

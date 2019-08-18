@@ -63,11 +63,11 @@ class tSNE_PlotBokeh(SNEPlot):
 
     def __init__(self, *argv, **argd):
         super(tSNE_PlotBokeh,self).__init__(*argv,**argd)        
-        self._figure_ls = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset,lasso_select")
-        self._figure_gn = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset")
-        self._figure_pgn = tSNE_PlotBokeh.figure(plot_width=300, plot_height=300,tools="pan,zoom_in,zoom_out,reset")
+        self._figure_ls = tSNE_PlotBokeh.figure(plot_width=400, plot_height=400,tools="lasso_select,pan,zoom_in,zoom_out,reset")
+        self._figure_gn = tSNE_PlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset")
+        self._figure_pgn = tSNE_PlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset")
         self._div = tSNE_PlotBokeh.Div(width=200, height=400, height_policy="fixed")
-        self._layout = tSNE_PlotBokeh.row(self._figure_ls, self._figure_gn, self._figure_pgn)  # , self._div
+        self._layout = tSNE_PlotBokeh.row(self._figure_ls, self._figure_pgn)  # , self._div
 
         # LS PLOT
         self._data_ls = tSNE_PlotBokeh.ColumnDataSource(data=dict(x=[],y=[],id=[]))

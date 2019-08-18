@@ -21,7 +21,7 @@ import matplotlib.colors as colors
 
 import ipysh
 
-from models.base import VAE
+from models.base import THunchModel, VAE
 
 def tf_nan_to_num(x, num=0.):
     return tf.where(tf.math.is_nan(x), tf.ones_like(x) * num, x)
@@ -97,7 +97,7 @@ class AEFIT2(VAE):
         self.activation = activation
         self.set_model()
         self.beta = beta
-        print('AEFIT2 ready:')
+        print('AEFIT2 a ready:')
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
@@ -141,33 +141,37 @@ class AEFIT2(VAE):
         ] )
         self.inference_net.build()
         self.generative_net.build()
+        self.compile( tf.keras.optimizers.Adam(learning_rate=1e-3) )
 
     def sample(self, eps=None):
         if eps is None:
             eps = tf.random.normal(shape=([-1,self.latent_dim]))
         return self.decode(eps, apply_sigmoid=True)
 
-    def encode(self, X):
+    @tf.function
+    def encode(self, X, training=True):
         X = tf.clip_by_value(X,0.,1.)
-        mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
+        mean, logvar = tf.split(self.inference_net(X, training=training), num_or_size_splits=2, axis=1)
         return mean, logvar
 
-    def reparameterize(self, mean, logvar):
+    @tf.function
+    def reparametrize(self, mean, logvar):
         eps = tf.random.normal(shape=mean.shape)
         return eps * tf.exp(logvar * .5) + mean
 
-    def decode(self, s, apply_sigmoid=False):
-        x = self.generative_net(s)
+    @tf.function
+    def decode(self, s, training=True, apply_sigmoid=False):
+        x = self.generative_net(s, training=training)
         if apply_sigmoid:
             x = tf.sigmoid(x)
         return x
 
-    def call(self, x):
-        m,_ = self.encode(x)
-        return self.decode(m, apply_sigmoid=True)
+    def call(self, x, training=True):
+        m,_ = self.encode(x, training=training)
+        return self.decode(m, training=training, apply_sigmoid=True)
 
     def recover(self,x):
-        xr = self.call(x)
+        xr = self.call(x, training=False)
         return tf.where(tf.math.is_nan(x),xr,x)
 
     def compute_loss(self, input):
@@ -178,7 +182,7 @@ class AEFIT2(VAE):
         att = tf.math.is_nan(input)
         xy  = tf_nan_to_num(input, 0.)
         mean,logv = self.encode(xy)
-        z = self.reparameterize(mean,logv)
+        z = self.reparametrize(mean,logv)
         XY = self.decode(z)
         XY = tf.where(att, tf.zeros_like(XY), XY)
         #
@@ -187,25 +191,29 @@ class AEFIT2(VAE):
         logpz   =  vae_logN_pdf(z, 0., 1.)
         logqz_x =  vae_logN_pdf(z, mean, logv)
         kl_mtc  =  logpz - logqz_x
-        kl_ana  = -0.5 * tf.reduce_sum(logv - tf.square(mean) - tf.exp(logv) + 1, axis=1)        
-        l_vae   = -tf.reduce_mean(self.beta * logpx_z + kl_mtc)/self.beta
+        #kl_ana  = -0.5 * tf.reduce_sum(logv - tf.square(mean) - tf.exp(logv) + 1, axis=1)        
+        l_vae   = -tf.reduce_mean(logpx_z + self.beta * kl_mtc)
         #
         return l_vae
 
+    def train_step(self, x, training=True):
+        with tf.GradientTape() as tape:
+            loss = self.compute_loss(x)
+        if training:
+            gradients = tape.gradient(loss, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))            
+        return loss        
+
     def plot_generative(self, z):
-        s = self.decode(tf.convert_to_tensor([z]),apply_sigmoid=True) 
+        s = self.decode(tf.convert_to_tensor([z]), training=False, apply_sigmoid=True) 
         x,y = tf.split(s,2,axis=1)
-        plt.plot(x[0],y[0])        
-
-    def save(self, filename):
-        self.inference_net.save_weights(filename+'_encoder.kcp')
-        self.generative_net.save_weights(filename+'_decoder.kcp')
-
-    def load(self, filename):
-        self.inference_net.load_weights(filename+'_encoder.kcp')
-        self.generative_net.load_weights(filename+'_decoder.kcp')
+        plt.plot(x[0],y[0])     
         
 
+
+
+
+## DISCONTINUED
 
 def compute_gradients(model, x):
     with tf.GradientTape() as tape:
@@ -214,10 +222,6 @@ def compute_gradients(model, x):
 
 def apply_gradients(optimizer, gradients, variables):
     optimizer.apply_gradients(zip(gradients, variables))
-
-
-
-
 
 
 
@@ -247,7 +251,7 @@ def test_dummy(model, data, epoch=40, batch=400, loss_factor=1e-3):
                   print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
                   
                   m,v = model.encode(X_data)
-                  z   = model.reparameterize(m,v)
+                  z   = model.reparametrize(m,v)
                   XY  = model.decode(z,apply_sigmoid=True)
                   X,Y = tf.split(XY,2, axis=1)
                   

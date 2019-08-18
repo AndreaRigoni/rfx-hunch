@@ -52,12 +52,10 @@ class AEFIT(VAE):
         self.inference_net = tf.keras.Sequential(
             [
             tf.keras.layers.Input(shape=(feature_dim,)),
-
-            # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(feature_dim, activation=tf.nn.relu),
-            #tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
-            #tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
             tf.keras.layers.Dense(2*latent_dim),
             ]
@@ -66,12 +64,11 @@ class AEFIT(VAE):
         self.generative_net = tf.keras.Sequential(
         [
             tf.keras.layers.Input(shape=(latent_dim,)),
-            # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(units=latent_dim, activation=tf.nn.relu),
             tf.keras.layers.Dense(latent_dim * 100, activation=tf.nn.relu),
-            #tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(latent_dim * 200, activation=tf.nn.relu),
-            #tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dropout(dprate),
             tf.keras.layers.Dense(units=feature_dim),
         ]
         )
@@ -89,7 +86,7 @@ class AEFIT(VAE):
         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
         return mean, logvar        
 
-    def reparameterize(self, mean, logvar):
+    def reparametrize(self, mean, logvar):
         eps = tf.random.normal(shape=mean.shape)
         return eps * tf.exp(logvar * .5) + mean
 
@@ -105,7 +102,7 @@ class AEFIT(VAE):
             return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
         xy = input
         mean,logv = self.encode(xy)
-        z = self.reparameterize(mean,logv)
+        z = self.reparametrize(mean,logv)
         XY = self.decode(z)
         #
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
@@ -168,7 +165,7 @@ def test_dummy(model, data=None, counts=60000, epoch=40, batch=400, loss_factor=
                     print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
                     m,v = model.encode(ts)
 
-                    z = model.reparameterize(m,v)
+                    z = model.reparametrize(m,v)
                     XY  = model.decode(z,apply_sigmoid=True)
                     X,Y = tf.split(XY,2, axis=1)
                     
@@ -200,7 +197,7 @@ def plot_supervised_latent_distributions(model, counts=10000):
     for X in data:
         ds,dl = X
         m,v = model.encode(ds)
-        z   = model.reparameterize(m,v)
+        z   = model.reparametrize(m,v)
         #XY  = model.decode(z,apply_sigmoid=True)
         plt.plot(z[:,0],z[:,1],'.',color=clist[dl%len(clist)])
         count += 1

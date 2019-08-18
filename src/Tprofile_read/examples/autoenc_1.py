@@ -94,7 +94,7 @@ class CVAE(tf.keras.Model):
     mean, logvar = tf.split(self.inference_net(x), num_or_size_splits=2, axis=1)
     return mean, logvar
 
-  def reparameterize(self, mean, logvar):
+  def reparametrize(self, mean, logvar):
     eps = tf.random.normal(shape=mean.shape)
     return eps * tf.exp(logvar * .5) + mean
 
@@ -127,7 +127,7 @@ def log_normal_pdf(sample, mean, logvar, raxis=1):
 
 def compute_loss(model, x):
   mean, logvar = model.encode(x)
-  z = model.reparameterize(mean, logvar)
+  z = model.reparametrize(mean, logvar)
   x_logit = model.decode(z)
   #
   cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)

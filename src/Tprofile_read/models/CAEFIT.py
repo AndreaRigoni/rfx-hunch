@@ -122,7 +122,7 @@ class CAEFIT(AEFIT3):
 #         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
 #         return mean, logvar
 
-#     def reparameterize(self, mean, logvar):
+#     def reparametrize(self, mean, logvar):
 #         eps = tf.random.normal(shape=mean.shape)
 #         return eps * tf.exp(logvar * .5) + mean
 
@@ -140,7 +140,7 @@ class CAEFIT(AEFIT3):
 #         att = tf.math.is_nan(input)
 #         xy  = tf_nan_to_num(input, 0.)
 #         mean,logv = self.encode(xy)
-#         z = self.reparameterize(mean,logv)
+#         z = self.reparametrize(mean,logv)
 #         XY = self.decode(z)
 #         XY = tf.where(att, tf.zeros_like(XY), XY)
 #         #
@@ -207,7 +207,7 @@ class CAEFIT(AEFIT3):
 #                   print('%d-%d loss: %f'%(e,count,tf.reduce_mean(loss)))                    
                   
 #                   m,v = model.encode(X_data)
-#                   z   = model.reparameterize(m,v)
+#                   z   = model.reparametrize(m,v)
 #                   XY  = model.decode(z,apply_sigmoid=True)
 #                   X,Y = tf.split(XY,2, axis=1)
                   

@@ -124,14 +124,19 @@ class GAN1(VAE):
         self.set_optimizers()
         print('GAN1 ready:')
 
+    def get_learning_rate(self):
+        return [ x._get_hyper('learning_rate') for x in self.optimizer ]
 
-    def set_optimizers(self, opt=tf.keras.optimizers.Adam, dfactor=1e-3):
-        # self.optimizers = [
-        #     opt(dfactor),
-        #     opt(dfactor)
-        # ]
-        self.gen_optimizer = tf.keras.optimizers.Adam(dfactor)
-        self.dis_optimizer = tf.keras.optimizers.Adam(dfactor)
+    def set_learning_rate(self, lf):
+        for x in self.optimizer:
+            x._set_hyper('learning_rate', lf)
+
+    def set_optimizers(self, opt=tf.keras.optimizers.Adam, dfactor=1e-5):
+        self.optimizer = [
+            opt(dfactor),
+            opt(dfactor)
+        ]
+
 
     def set_model(self, training=True):
         feature_dim = self.feature_dim
@@ -139,41 +144,41 @@ class GAN1(VAE):
         if training: dprate = self.dprate
         else: dprate = 0.
         scale = self.scale
-        # activation = self.activation
+        activation = self.activation
         
-
-        # # ## GENERATION ##
-        self.generative_net = tf.keras.Sequential( [
-            tf.keras.layers.Input(shape=(latent_dim,)),            
-            tf.keras.layers.Dense(latent_dim),
-            tf.keras.layers.Dense(feature_dim * 10 * scale),
-            tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Dense(feature_dim * 20 * scale),
-            tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Reshape(target_shape=(2, int(feature_dim/2), int(20*scale) )),
-            tf.keras.layers.Conv2DTranspose(filters=32*scale, kernel_size=(2,3), strides=(1, 1), padding="SAME"),
-            tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(1,1), strides=(1, 1), padding="SAME"),
-            tf.keras.layers.Flatten(),
-        ] )
 
         ## INFERENCE ##
         self.inference_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim)),
             tf.keras.layers.Reshape( target_shape=(2,int(feature_dim/2),1) ),
-            tf.keras.layers.Conv2D(filters=32*scale, kernel_size=(2,3), strides=(1, 1), padding='SAME', activation='relu'),
+            tf.keras.layers.Conv2D(filters=32*scale, kernel_size=(2,3), strides=(1, 1), padding='SAME', activation=activation),
             tf.keras.layers.Dropout(dprate),            
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(feature_dim * 20 * scale, activation='relu'),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(feature_dim * 10 * scale, activation='relu'),
-            tf.keras.layers.Dense(latent_dim * 2),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
+            tf.keras.layers.Dropout(dprate),
+            tf.keras.layers.Dense(feature_dim * 10 * scale, activation=activation),
+            tf.keras.layers.Dense(latent_dim),
         ] )
+
+        # # ## GENERATION ##
+        self.generative_net = tf.keras.Sequential( [
+            tf.keras.layers.Input(shape=(latent_dim,)),
+            tf.keras.layers.Dense(latent_dim),
+            tf.keras.layers.Dense(feature_dim * 10 * scale, activation=activation),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
+            tf.keras.layers.Dense(feature_dim * 20 * scale, activation=activation),
+            tf.keras.layers.Reshape(target_shape=(2, int(feature_dim/2), int(20*scale) )),
+            tf.keras.layers.Conv2DTranspose(filters=32*scale, kernel_size=(2,3), strides=(1, 1), padding="SAME", activation=activation),
+            tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=(1,1), strides=(1, 1), padding="SAME"),
+            tf.keras.layers.Flatten(),
+        ] )
+
 
         ## DISCRIMINATOR ##
         self.discriminator_net = tf.keras.Sequential([            
             tf.keras.layers.Input(shape=(latent_dim,)),
-            tf.keras.layers.Dense(latent_dim * 20 * scale, activation='relu'),
             tf.keras.layers.Dense(1),
         ])
 
@@ -184,35 +189,26 @@ class GAN1(VAE):
 
     @tf.function
     def encode(self, x, training=False):
-        me,lv = tf.split(self.inference_net(x, training=training), num_or_size_splits=2, axis=1)
-        return me,lv
+        # me,lv = tf.split(self.inference_net(x, training=training), num_or_size_splits=2, axis=1)
+        me = lv = self.inference_net(x, training=training)
+        return me, lv
 
     @tf.function
-    def decode(self, s, apply_sigmoid=False, training=False):
-        y = self.generative_net(s, training=training)
+    def decode(self, z, apply_sigmoid=False, training=False):
+        y = self.generative_net(z, training=training)
         return y
     
-    # def reparameterize(self, z_mean, z_log_var):
-    #     batch = tf.shape(z_mean)[0]
-    #     dim = tf.shape(z_mean)[1]
-    #     epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
-    #     return z_mean + tf.exp(0.5 * z_log_var) * epsilon
-
-    def reparametrize(self, mean, logvar):
-        eps = tf.random.normal(shape=mean.shape)
+    def reparametrize(self, mean, logvar = 0.):
+        eps = tf.random.normal(shape=mean.shape) * self.beta
         return eps * tf.exp(logvar * .5) + mean
 
     @tf.function
     def discriminate(self, x, training=True):
-        s,_ = tf.split(self.inference_net(x, training=training), num_or_size_splits=2, axis=1)
+        s,_ = self.encode(x, training=training)
         return self.discriminator_net(s, training=training)
 
     @tf.function
     def train_step(self, data, training=True):
-        # generator_optimizer = self.optimizers[0]
-        # discriminator_optimizer = self.optimizers[1]
-        # batch_size = tf.shape(data)[0]
-        # noise = tf.random.normal([batch_size, self.latent_dim])
         cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
         def discriminator_loss(real_output, fake_output):
@@ -225,58 +221,25 @@ class GAN1(VAE):
             return cross_entropy(tf.ones_like(fake_output), fake_output)
         
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            me,lv = self.encode(data)
-            kl_loss = -0.5 * tf.reduce_sum(lv + 1 - tf.square(me) + tf.exp(lv))
-            z = self.reparametrize(me,lv)
+            s,_ = self.encode(data)
+            z = self.reparametrize(s)
+            # kl_loss = -0.5 * tf.reduce_sum(lv + 1 - tf.square(me) + tf.exp(lv))
             generated_data = self.decode(z, training=training)
             real_output = self.discriminate(data, training=training)
             fake_output = self.discriminate(generated_data, training=training)
-            gen_loss  = generator_loss(fake_output) - kl_loss
+            gen_loss  = generator_loss(fake_output)
             disc_loss = discriminator_loss(real_output, fake_output)
             
         if training:
             gradients_of_generator = gen_tape.gradient(gen_loss, self.generative_net.trainable_variables)
             gradients_of_discriminator = disc_tape.gradient(disc_loss, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables)
-            self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.generative_net.trainable_variables))
-            self.dis_optimizer.apply_gradients(zip(gradients_of_discriminator, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables))
+            self.optimizer[0].apply_gradients(zip(gradients_of_generator, self.generative_net.trainable_variables))
+            self.optimizer[1].apply_gradients(zip(gradients_of_discriminator, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables))
         
 
-        return tf.reduce_sum([gen_loss, disc_loss, kl_loss])
+        return tf.reduce_sum([gen_loss, disc_loss])
 
     
-
-    def train(self, dataset, epoch=10, batch=200, optimizer_factor=1e-3):
-        from tqdm import tqdm
-        self.set_optimizers(dfactor=optimizer_factor)
-        dataset_test  = dataset[0:batch]
-        dataset_train = dataset[batch+1:]        
-        ds = dataset_test.ds_array
-        dt = dataset_train.ds_array
-        def print_test_loss():
-            ts_loss = 0
-            for data in ds.batch(batch):
-                x,_ = data
-                ts_loss += self.train_step(x,training=False)
-            print("test loss: ",ts_loss.numpy())
-
-        for e in range(epoch):
-            import sys
-            print('EPOCH: ',e)
-            # for i,data in enumerate(tqdm(dt.batch(batch), total=len(dataset_train)/batch+1)):
-            for i,data in enumerate(dt.batch(batch)):
-                x,_ = data
-                loss = self.train_step(x)                
-                sys.stdout.write('it: %d - loss: %f \r'%(i,loss))
-                if self.stop_training:
-                    break
-            print_test_loss()
-            if self.stop_training:
-                print(' Train early stopping ... ')
-                break
-
-                
-            
-
 
 
 

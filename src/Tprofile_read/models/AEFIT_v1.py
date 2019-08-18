@@ -83,7 +83,7 @@ class AEFIT_v1(VAE):
         mean, logvar = tf.split(self.inference_net(X), num_or_size_splits=2, axis=1)
         return mean, logvar        
 
-    def reparameterize(self, mean, logvar):
+    def reparametrize(self, mean, logvar):
         eps = tf.random.normal(shape=(self.latent_dim,))
         return eps * tf.exp(logvar * .5) + mean
 
@@ -99,7 +99,7 @@ class AEFIT_v1(VAE):
             return tf.reduce_sum( -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
         xy = input
         mean,logv = self.encode(xy)
-        z = self.reparameterize(mean,logv)
+        z = self.reparametrize(mean,logv)
         XY = self.decode(z)
         #
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)

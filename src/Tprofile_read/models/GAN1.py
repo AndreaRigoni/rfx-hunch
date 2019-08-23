@@ -235,7 +235,6 @@ class GAN1(VAE):
             gradients_of_discriminator = disc_tape.gradient(disc_loss, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables)
             self.optimizer[0].apply_gradients(zip(gradients_of_generator, self.generative_net.trainable_variables))
             self.optimizer[1].apply_gradients(zip(gradients_of_discriminator, self.inference_net.trainable_variables + self.discriminator_net.trainable_variables))
-        
 
         return tf.reduce_sum([gen_loss, disc_loss])
 

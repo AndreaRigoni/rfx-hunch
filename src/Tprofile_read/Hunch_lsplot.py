@@ -10,6 +10,7 @@ import tensorflow as tf
 import abc
 
 import models
+import models.AEFIT4
 
 class LSPlot():
     __metaclass__ = abc.ABCMeta    
@@ -31,16 +32,29 @@ class LSPlot():
         }) + argd
         self._model = None
         self._data  = None
-
-
+        self._browse_model = None
+        
     def set_model(self, model):
         # assert isinstance(model, AEFIT.Hunch_VAE), "Input variables should be AEFIT"
         self._model = model
         
+        
     def set_data(self, data):
         # assert isinstance(data, Dummy_g1data.FiniteSequence1D), "Input variables should be FiniteSequence1D"
         self._data = data    
-    
+            
+    def train_browse_model(self, Model):
+        model = self._model
+        data  = self._data
+                    
+        # tot_len = len(data)
+        # dataset = dataset.apply(tf.contrib.data.map_and_batch(map_func=parse_fn, batch_size=FLAGS.batch_size))
+        ds = data.ds_array.batch(100).map(lambda x,y: (model.encode(x, training=False)[0],y))
+        self._browse_model = Model(latent_dim=2, feature_dim=model.latent_dim)
+        # self._browse_model.inference_net.summary()
+        # self._browse_model.generative_net.summary()
+        # return [x for x in ds.map(lambda x,y: (x,x)).take(1)][0]
+        models.base.train(self._browse_model, ds, epoch=5, batch=None)
 
 
 class LSPlotBokeh(LSPlot):
@@ -106,22 +120,29 @@ class LSPlotBokeh(LSPlot):
             for g in self._ls_glyphs: g.visible = False                
             if name: self._figure_ls.select(name=name).visible = True
 
-        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],label=[]) )
+        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],tbordo=[],
+                                                               label=[],Ip=[],dsxm=[],dens=[],F=[],TH=[],POW=[]
+                                                               ) )
         self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)        
-        self._ls_glyphs += [self._figure_ls.circle('mx','my',name='Tc', legend='Tc',
-                                                        size=10, 
-                                                        source=self._data_ls, 
-                                                        alpha=0.5, 
-                                                        line_width=0,
-                                                        fill_color={'field': 'tcentro', 'transform': self._mapper3}
-                                                        )]
-        self._ls_glyphs += [self._figure_ls.circle('mx','my',name='label', legend='label',
-                                                        size=10, 
-                                                        source=self._data_ls, 
-                                                        alpha=0.5, 
-                                                        line_width=0,
-                                                        fill_color={'field': 'label', 'transform': self._mapper4}
-                                                        )]
+        
+        def add_sl_glyph(name, field=None, mapper=self._mapper3):
+            if field is None: field = name
+            self._ls_glyphs += [self._figure_ls.circle('mx','my',name=name, legend=name,
+                                                            size=10, 
+                                                            source=self._data_ls, 
+                                                            alpha=0.5, 
+                                                            line_width=0,
+                                                            fill_color={'field': field, 'transform': mapper}
+                                                            )]
+        add_sl_glyph('label', mapper=self._mapper4)
+        add_sl_glyph('tcentro',)
+        add_sl_glyph('tbordo',)
+        add_sl_glyph('Ip',  )
+        add_sl_glyph('dsxm',)
+        add_sl_glyph('log dens', field='dens',)
+        add_sl_glyph('F',   )
+        add_sl_glyph('POW', )
+
         self._figure_ls.legend[0].visible = False
         toggle_ls_glyphs(None)
         for event in LSPlotBokeh.point_events:
@@ -136,10 +157,22 @@ class LSPlotBokeh(LSPlot):
         # WIDGETS #
         self._b1 = LSPlotBokeh.Button(label="Update ls", button_type="success", width=150)
         self._b1.on_click(self.update_ls)
-        self._b2 = LSPlotBokeh.Button(label="Plasma Tc", width=150)
-        self._b2.on_click(lambda: toggle_ls_glyphs('Tc'))
-        self._b3 = LSPlotBokeh.Button(label="label", width=150)
-        self._b3.on_click(lambda: toggle_ls_glyphs('label'))
+        self._b2 = LSPlotBokeh.Button(label="label", width=150)
+        self._b2.on_click(lambda: toggle_ls_glyphs('label'))
+        self._b3 = LSPlotBokeh.Button(label="Te center", width=150)
+        self._b3.on_click(lambda: toggle_ls_glyphs('tcentro'))
+        self._b4 = LSPlotBokeh.Button(label="Te bondary", width=150)
+        self._b4.on_click(lambda: toggle_ls_glyphs('tbordo'))
+        self._b5 = LSPlotBokeh.Button(label="Ip", width=150)
+        self._b5.on_click(lambda: toggle_ls_glyphs('Ip'))
+        self._b6 = LSPlotBokeh.Button(label="dsxm", width=150)
+        self._b6.on_click(lambda: toggle_ls_glyphs('dsxm'))
+        self._b7 = LSPlotBokeh.Button(label="log dens", width=150)
+        self._b7.on_click(lambda: toggle_ls_glyphs('log dens'))
+        self._b8 = LSPlotBokeh.Button(label="F", width=150)
+        self._b8.on_click(lambda: toggle_ls_glyphs('F'))
+        self._b9 = LSPlotBokeh.Button(label="POW", width=150)
+        self._b9.on_click(lambda: toggle_ls_glyphs('POW'))
 
         self._layout = LSPlotBokeh.column( 
             LSPlotBokeh.row(self._figure_ls,self._figure_gn,
@@ -147,10 +180,19 @@ class LSPlotBokeh(LSPlot):
                     self._b1,
                     self._b2,
                     self._b3,
+                    self._b4,
+                    self._b5,
+                    self._b6,
+                    self._b7,
+                    self._b8,
+                    self._b9,
                 )),
             #LSPlotBokeh.row(self._div)
         )
-    
+        
+
+
+
     def plot(self, notebook_url='http://172.17.0.2:8888'):
         self.plot_notebook(notebook_url)
 
@@ -197,43 +239,59 @@ class LSPlotBokeh(LSPlot):
     def update_ls(self):
         model = self._model
         counts = self._counts
-        ds   = self._data.ds_array.prefetch(counts).batch(counts).take(1)
+        ds   = self._data.ds_array.batch(counts).take(1)
         dc   = self._data[0:counts]
-        dc._counts = counts
-        ts,tl = ds.make_one_shot_iterator().get_next()
+        dc._counts = counts # to handle a bug that is going to be fixed soon
+        ts,tl = [x for x in ds][0]
+        
         def normalize(data):
             return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+        # if model.latent_dim > 2:
+        #     from sklearn.manifold import TSNE
+        #     tSNE_m = TSNE(n_components=2)
+        #     tSNE_v = TSNE(n_components=2)
+        #     for xy,_ in ds.ds_array.batch(counts).take(10):
+        #         m,v = model.encode(xy)
+        #         tSNE_m.fit(m)
+        #         tSNE_v.fit(v)
+        
         ## IS VAE
         if issubclass(type(model), models.base.VAE):
-            if model.latent_dim == 2:
-                m,v = model.encode(ts, training=False)
-                z = model.reparametrize(m,v)
+            m,v = model.encode(ts, training=False)
+            z = model.reparametrize(m,v)
+            v = tf.exp(0.5 * v) * 500.
+            if self._browse_model:
+                m,v = self._browse_model.encode(m)
+                z   = self._browse_model.reparametrize(z)
                 v = tf.exp(0.5 * v) * 500.
-                data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
-                            vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
-                            v_sum=(v[:,0].numpy()+v[:,1].numpy()),
-                            zx=z[:,0].numpy(), zy=z[:,1].numpy(),
-                            tcentro=normalize(dc['tcentro']),
-                            label=tl.numpy()
-                            )
-                self._data_ls.data = data                
-        
+            elif model.latent_dim != 2:
+                pass
+            
         ## IS GAN
         elif issubclass(type(model), models.base.GAN):
             if model.latent_dim == 2:
                 self._figure_ls.x_range=LSPlotBokeh.Range1d(-5,5)
                 self._figure_ls.y_range=LSPlotBokeh.Range1d(-5,5)
-                # m = v = model.encode(ts, training=False)
                 z = m = v = tf.random.normal(tf.shape(ts))
-                data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
-                            vx=v[:,0].numpy(), vy=v[:,1].numpy(),
-                            v_sum=(v[:,0].numpy()+v[:,1].numpy()),
-                            zx=z[:,0].numpy(), zy=z[:,1].numpy(),
-                            tcentro=normalize(dc['tcentro']),
-                            label=tl.numpy()
-                            )       
-                self._data_ls.data = data
-                
+
+        if model.latent_dim == 2:                
+            data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
+                        vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
+                        v_sum=(v[:,0].numpy()+v[:,1].numpy()),
+                        zx=z[:,0].numpy(), zy=z[:,1].numpy(),
+                        tcentro=normalize(dc['tcentro']),
+                        tbordo=normalize(dc['tbordo']),
+                        Ip=normalize(dc['Ip']),
+                        dsxm=normalize(dc['Te_dsxm']),
+                        dens=normalize(dc['dens']),
+                        F=normalize(dc['F']),
+                        POW=normalize(dc['POW']),
+                        label=tl.numpy()
+                    )
+            self._data_ls.data = data
+        
+        
 
 
     def plot_generative(self, x, y):

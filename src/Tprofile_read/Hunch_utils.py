@@ -20,7 +20,7 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors 
 
 import copy
-import models
+import models.base
 
 
 
@@ -325,37 +325,16 @@ class Clustering(Struct):
 class QSH(Struct):
     __metaclass__ = abc.ABCMeta            
     _dtype = np.dtype ( [  ('label','S10'),
-                                ('i_qsh', np.int32 ),
-                                ('tbordo','>f4' ),
-                                ('tcentro','>f4' ),
-                                ('pos','>f4' ),
-                                ('grad','>f4' ),
-                                ('n_ok', np.int32 ),
-                                ('prel','>f4', (20,) ),
-                                ('rho','>f4', (20,) ),
-                                ('te','>f4', (20,) ),
-
-							# SHEq map
-							('mapro','>f4', (51,51) ),
-							('xxg','>f4', (51,) ),
-							('yyg','>f4', (51,) ),
-
-							# Spectrum
-							('n', '>i4', (10,) ),
-							('absBt_rm', '>f4', (10,)),
-							('argBt_rm', '>f4', (10,)),
-							('absBr_rm', '>f4', (10,)),
-							('argBr_rm', '>f4', (10,)),
-							('absBt_rs', '>f4', (10,)),
-							('argBt_rs', '>f4', (10,)),
-							('absBr_rs', '>f4', (10,)),
-							('argBr_rs', '>f4', (10,)),
-							('absBr_rp', '>f4', (10,)),
-							('argBr_rp', '>f4', (10,)),
-							('absBr_max', '>f4', (10,)),
-							('absFlux_max', '>f4', (10,)),
-
-                            ] )
+                           ('i_qsh', np.int32 ),
+                           ('n_ok', np.int32 ),
+                           ('tbordo','>f4' ),
+                           ('tcentro','>f4' ),
+                           ('pos','>f4' ),
+                           ('grad','>f4' ),
+                           ('prel','>f4', (20,) ),
+                           ('rho','>f4', (20,) ),
+                           ('te','>f4', (20,) ),
+                        ] )
     _data = np.empty(1,dtype=_dtype)
 
     def __init__(self, *ref):
@@ -367,6 +346,9 @@ class QSH(Struct):
     def __setattr__(self, name, val):
         self._data[name] = val
     
+    def __getitem__(self, key):        
+        return self._data[key]
+
     def get_pulse(self):
         # almeno verifico che sia un impulso di RFX-mod	
         shot = int(self.label.split(b'_')[0])
@@ -379,37 +361,9 @@ class QSH(Struct):
         '''
         return int(self.label.split(b'_')[1])
     
-
-    label    = property()
-    i_qsh    = property()
-    tborder  = property()
-    tcenter  = property()
-    pos      = property()
-    grad     = property()
-    n_ok     = property()
-    prel     = property()
-    rho      = property()
-    te       = property()
+    # addiditonal properties
     pulse    = property(get_pulse)
     start    = property(get_start)
-    
-    mapro = property()
-    xxg = property()
-    yyg = property()
-    
-    n = property()
-    absBt_rm = property()
-    argBt_rm = property()
-    absBr_rm = property()
-    argBr_rm = property()
-    absBt_rs = property()
-    argBt_rs = property()
-    absBr_rs = property()
-    argBr_rs = property()
-    absBr_rp = property()
-    argBr_rp = property()
-    absBr_max = property()
-    absFlux_max = property()
 
 
     def plot_countour(self, ax = None):
@@ -451,7 +405,12 @@ class QSH_Dataset(models.base.Dataset):
             qsh._dataset = self._dataset[key]
             return qsh
         elif isinstance(key, str):
-            return self._dataset[:][key]
+            try:    val = self._dataset[:][key]
+            except: val = np.full([len(self)], self._null)
+            return val
+        elif isinstance(key, tuple):
+            val = [ self[:][k] for k in key ]
+            return val
         else:
             print("not supported index: ",type(key))
 
@@ -529,7 +488,7 @@ class QSH_Dataset(models.base.Dataset):
             mean = np.nanmean(self[axis])
         for x in self._dataset:
             y = x[axis]
-            x[axis] = y-np.nanmean(y)
+            x[axis] = y-np.nanmean(y)+mean
         
     def clip_values(self, a_min, a_max, axis='te'):
         self._dataset['te'] = np.clip(self._dataset['te'], a_min=a_min, a_max=a_max )
@@ -678,6 +637,19 @@ class QSH_Dataset(models.base.Dataset):
         print("this should be shriked to: ",yh_max)
 
 
+    def tf_tuple_compose(self, fields=[]):
+        def gen():
+            import itertools
+            for i in itertools.count(0):
+                if i < len(self):
+                    data  = [ self[i][n][0:self.dim] for n in fields ]
+                    yield tuple(data)
+                else:
+                    return
+        d0 = [ self[0][n][0:self.dim] for n in fields]
+        types = tuple([tf.convert_to_tensor(x).dtype for x in d0])
+        shape = tuple([np.shape(x) for x in d0])
+        return tf.data.Dataset.from_generator(gen, types, shape)
 
 
     # PROPERTIES

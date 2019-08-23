@@ -65,6 +65,7 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 		data.absBr_max  [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   5, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.absFlux_max[i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   6, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 
+
 	if tree is not None:
 		tree.close()
 	return data
@@ -87,9 +88,13 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 	t_qsh_end = np.atleast_1d( x.t2_arr[0]*1E-3 )
 	print (file,' ',n_qsh)
 
-	t_min = t_qsh_begin[0]
-	t_max = t_qsh_end[-1]
-
+	t_min  = t_qsh_begin[0]
+	t_max  = t_qsh_end[-1]
+	
+	dim_pulse = x.t[0]
+	def find_pos(t): 
+		return np.argmin(dim_pulse - t)
+	
 	qshs = []
 	for i_qsh in range( n_qsh ) :
 		qsh_name = 'T%02d' % i_qsh
@@ -113,8 +118,25 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 							('rho','>f4', (20,) ),
 							('te','>f4', (20,) ),
 							
-							('Ip','>f4', (20,) ),
-							
+							('Ip','>f4' ),
+							('dens', '>f4'),
+							('Te_dsxm', '>f4'),
+							('F',   '>f4'),
+							('POW', '>f4'),
+							('VT',  '>f4'),
+							('VP',  '>f4'),
+
+							('B0',  '>f4'),
+							('B07', '>f4'),
+							('B08', '>f4'),
+							('B06', '>f4'),
+							('B1',  '>f4'),
+							('B17', '>f4'),
+							('B18', '>f4'),
+							('B19', '>f4'),
+							('NS',  '>f4'),
+
+
 							# SHEq map
 							('mapro','>f4', (51,51) ),
 							('xxg','>f4', (51,) ),
@@ -151,17 +173,16 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 		spectrum = read_spectrum(shot, t0=t0, t1=t1)
 
 		for k_time in np.arange( n_times ) :
-			tx = qsh.tempi[0][k_time]
+			tx = qsh.tempi[0][k_time]			
+			tt = np.rint( tx*1E4 ) # label tempo in decimi di ms
+			ii = find_pos(tx)      # posizione nell'array della scarica
 
-			# label tempo in decimi di ms
-			tttt = np.rint( tx*1E4 )
-
-			label = r'%5d_%04d' % ( shot, tttt )
+			label = r'%5d_%04d' % ( shot, tt )
 			#print label
 			
 			q_data[i_time]['label'] = label
 			q_data[i_time]['pulse'] = shot
-			q_data[i_time]['start'] = tttt
+			q_data[i_time]['start'] = tt
 			q_data[i_time]['i_qsh'] = i_qsh
 			
 			te_ok = qsh.te3[0][k_time,:] > 0
@@ -171,20 +192,39 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			q_data[i_time]['rho']  = qsh.rho3[0][k_time]
 			q_data[i_time]['te']   = qsh.te3[0][k_time]
 			
+			q_data[i_time]['Ip']      = x.ip[0][ii]
+			q_data[i_time]['dens']    = x.dens[0][ii]
+			q_data[i_time]['Te_dsxm'] = x.te[0][ii]
+			q_data[i_time]['F']    = x.f[0][ii]
+			q_data[i_time]['TH']    = x.th[0][ii]
+			q_data[i_time]['POW']  = x.POW[0][ii]
+			q_data[i_time]['VT']   = x.vt[0][ii]
+			q_data[i_time]['VP']   = x.vp[0][ii]
+
+			q_data[i_time]['B0']   = x.b0[0][ii]
+			q_data[i_time]['B07']  = x.b07[0][ii]
+			q_data[i_time]['B08']  = x.b08[0][ii]
+			q_data[i_time]['B06']  = x.b06[0][ii]
+			q_data[i_time]['B1']   = x.bs[0][ii]
+			q_data[i_time]['B17']  = x.b7[0][ii]
+			q_data[i_time]['B18']  = x.b8[0][ii]
+			q_data[i_time]['B19']  = x.b9[0][ii]
+			q_data[i_time]['NS']   = x.ns[0][ii]
+
 			q_data[i_time]['tbordo'] = qsh.tbordo[0][k_time]
 			q_data[i_time]['tcentro'] = qsh.tcentro[0][k_time]
 			q_data[i_time]['pos'] = qsh.pos2[0][k_time]
 			q_data[i_time]['grad'] = qsh.grad2[0][k_time]
-			
-			
-
+						
 			# SHEq
 			q_data[i_time]['mapro'] = qsh.mapro[0][k_time]
 			q_data[i_time]['xxg'] = qsh.xxg[0]
-			q_data[i_time]['yyg'] = qsh.yyg[0]
+			q_data[i_time]['yyg'] = qsh.yyg[0]			
+
+
 
 			# spectrum
-			spid = list(spectrum.dimof[0]).index(tttt)
+			spid = list(spectrum.dimof[0]).index(tt)
 			q_data[i_time]['n'] = 0 
 			q_data[i_time]['absBt_rm'][:] = np.nan
 			q_data[i_time]['argBt_rm'][:] = np.nan

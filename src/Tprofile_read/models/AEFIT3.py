@@ -113,13 +113,13 @@ class AEFIT3(models.base.VAE):
             tf.keras.layers.Input(shape=(feature_dim,)),
             NaNDense(feature_dim, activation=activation),
             # tf.keras.layers.Dense(feature_dim, activation=activation),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dense(2*latent_dim),
             ] )
 
@@ -127,20 +127,20 @@ class AEFIT3(models.base.VAE):
         self.generative_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(latent_dim,)),
             tf.keras.layers.Dense(units=latent_dim),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dense(units=feature_dim),
         ] )
         self.inference_net.build()
         self.generative_net.build()
-
-        # self.inputs = self.inference_net.inputs
-        # self.outputs = self.generative_net.outputs
+        #self.inputs = self.inference_net.inputs
+        #self.outputs = self.generative_net.outputs
+        
         self._sce = 0.
         self._kld = 0.
         self._akl = 0.
@@ -289,13 +289,14 @@ class AEFIT3m(AEFIT3):
         i_shape = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim,)),
             NaNDense(feature_dim, activation=activation),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),
+            tf.keras.layers.Dense(latent_dim * 3 * scale),
             ] )
         i_mean   = tf.keras.layers.Input(shape=(1,))
         i_concat = tf.keras.layers.Concatenate()([i_mean, i_shape.output])
@@ -308,13 +309,13 @@ class AEFIT3m(AEFIT3):
         self.generative_net = tf.keras.Sequential([
             tf.keras.layers.Input(shape=(latent_dim,)),
             tf.keras.layers.Dense(units=latent_dim),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 100 * scale, activation=activation),            
+            tf.keras.layers.Dense(int(feature_dim * 10 * scale), activation=activation),            
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dropout(dprate),
-            tf.keras.layers.Dense(latent_dim * 200 * scale, activation=activation),
+            tf.keras.layers.Dense(int(feature_dim * 20 * scale), activation=activation),
             tf.keras.layers.Dense(units=feature_dim),
         ], name = 'generative_net')
         
@@ -353,15 +354,14 @@ class AEFIT3m(AEFIT3):
 
     def vae3_loss_m(self, xy, XY):
         xy = tf.where(tf.math.is_nan(xy), tf.zeros_like(xy), xy)
-        x,y = tf.split(xy, num_or_size_splits=2, axis=1)
-        m   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
-        xy  = tf.concat([x,y-m+0.5], axis=1)
-        xy  = tf.clip_by_value(xy,0.,1.)
-
-        XY = tf.where(tf.math.is_nan(XY), tf.zeros_like(XY), XY)
-        M   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
-        X,Y = tf.split(XY, num_or_size_splits=2, axis=1)
-        XY  = tf.concat([X,Y-M+0.5], axis=1)
+        # x,y = tf.split(xy, num_or_size_splits=2, axis=1)
+        # m   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
+        # xy  = tf.concat([x,y-m+0.5], axis=1)
+        # xy  = tf.clip_by_value(xy,0.,1.)
+        # XY = tf.where(tf.math.is_nan(XY), tf.zeros_like(XY), XY)
+        # # M   = tf.reshape(tf.reduce_mean(y, axis=1), [-1,1])
+        # X,Y = tf.split(XY, num_or_size_splits=2, axis=1)
+        # XY  = tf.concat([X,Y-m+0.5], axis=1)
 
         crossen =  tf.nn.sigmoid_cross_entropy_with_logits(logits=XY, labels=xy)
         logpx_z =  tf.reduce_sum(crossen, axis=[1])

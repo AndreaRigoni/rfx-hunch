@@ -16,8 +16,8 @@ import models
 
 class THunchModel(tf.keras.Model):
     __metaclass__ = abc.ABCMeta
-    def __init__(self):
-        super(THunchModel, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(THunchModel, self).__init__(*args, **kwargs)
         self.stop_training = False
 
 
@@ -50,7 +50,7 @@ class THunchModel(tf.keras.Model):
 
         def compute_test_loss():
             ts_loss = 0
-            for data in ds.batch(batch):
+            for data in ds.batch(batch, drop_remainder=True):
                 x,_ = data
                 ts_loss = self.train_step(x,training=False)
             return ts_loss.numpy()
@@ -58,9 +58,9 @@ class THunchModel(tf.keras.Model):
         for e in range(epoch):
             import sys
             print('EPOCH: ',e)
-            for i,data in enumerate(dt.batch(batch)):
+            for i,data in enumerate(dt.batch(batch, drop_remainder=True)):
                 x,_ = data
-                loss = self.train_step(x)                
+                loss = self.train_step(x)
                 sys.stdout.write('it: %d - loss: %f \r'%(i,loss))
                 if self.stop_training:
                     break
@@ -91,8 +91,8 @@ class THunchModel(tf.keras.Model):
 
 class VAE(THunchModel):
     __metaclass__ = abc.ABCMeta
-    def __init__(self):
-        super(VAE, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(VAE, self).__init__(*args, **kwargs)
 
     @abc.abstractmethod
     def encode(self, x, training=False):
@@ -140,6 +140,7 @@ class GAN(THunchModel):
 
 class Dataset():
     __metaclass__ = abc.ABCMeta
+
     # BASE PROPERTIES    
     @property
     @abc.abstractmethod
@@ -150,7 +151,6 @@ class Dataset():
     @abc.abstractmethod
     def ds_array(self):
         return NotImplementedError
-
 
 
 
@@ -186,8 +186,11 @@ def train(model, data, epoch=40, batch=200, learning_rate=1e-3, log_name=None, c
     model.learning_rate = learning_rate
     if issubclass(type(data), models.base.Dataset):
         data = data.ds_array
-    ds = data.batch(batch, drop_remainder=True).map(lambda x,y: (x,x))
-    history = model.fit(ds, epochs=epoch, callbacks=[LearningRatePowDecay(), ResetCallback()] + tensorboard_log(log_name), verbose=1) 
+    if batch: data = data.batch(batch, drop_remainder=True)
+    data = data.map(lambda x,y: (x,x))
+    if callbacks is None:
+        callbacks = [LearningRatePowDecay(), ResetCallback()]
+    history = model.fit(data, epochs=epoch, callbacks=callbacks + tensorboard_log(log_name), verbose=1) 
     return history
     
 def train_thread(model, data, epoch=40, batch=200, learning_rate=1e-3, log_name=None, callbacks=None):     
@@ -244,7 +247,7 @@ def manual_train(model, data, epoch=5, batch=200, loss_factor=1e-3):
                   XY  = model.decode(z, training=False, apply_sigmoid=True)
                   X,Y = tf.split(XY,2, axis=1)
                   
-                  ax1.clear()                  
+                  ax1.clear()
                   ax1.plot(m[:,0],m[:,1],'.')
                   # plt.plot(v[:,0],v[:,1],'.')
                   
@@ -253,5 +256,7 @@ def manual_train(model, data, epoch=5, batch=200, loss_factor=1e-3):
                       ax2.plot(X[i],Y[i],'.')
 
                   fig.canvas.draw()
+
+
 
 

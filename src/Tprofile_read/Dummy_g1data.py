@@ -57,7 +57,7 @@ class Dummy_g1data(models.base.Dataset):
         self._dataset = ds
         return self
     
-    def clear():
+    def clear(self):
         self._dataset = None
 
     def __len__(self):
@@ -78,6 +78,9 @@ class Dummy_g1data(models.base.Dataset):
         elif isinstance(key, str):
             try:    val = self._dataset[:][key]
             except: val = np.full([self._counts], self._null)
+            return val
+        elif isinstance(key, tuple):
+            val = [ self[:][k] for k in key ]
             return val
         else:
             print("not supported index: ",type(key))

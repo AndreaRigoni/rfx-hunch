@@ -74,7 +74,7 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 
 
 
-def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
+def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False ) :
 	file = 'dsx3_%d.sav' % shot
 	try:
 		x = readsav( data_dir+file, python_dict=False ).st
@@ -170,7 +170,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 		n_times = qsh.tempi[0].shape[0]
 		t0 = np.rint(np.min(qsh.tempi[0])*1E4)
 		t1 = np.rint(np.max(qsh.tempi[0])*1E4)
-		spectrum = read_spectrum(shot, t0=t0, t1=t1)
+		if add_spectum:
+			spectrum = read_spectrum(shot, t0=t0, t1=t1)
 
 		for k_time in np.arange( n_times ) :
 			tx = qsh.tempi[0][k_time]			
@@ -221,10 +222,7 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			q_data[i_time]['xxg'] = qsh.xxg[0]
 			q_data[i_time]['yyg'] = qsh.yyg[0]			
 
-
-
 			# spectrum
-			spid = list(spectrum.dimof[0]).index(tt)
 			q_data[i_time]['n'] = 0 
 			q_data[i_time]['absBt_rm'][:] = np.nan
 			q_data[i_time]['argBt_rm'][:] = np.nan
@@ -239,19 +237,21 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 			q_data[i_time]['absBr_max'][:] = np.nan
 			q_data[i_time]['absFlux_max'][:] = np.nan
 
-			q_data[i_time]['n'][:len(spectrum.n)] = spectrum.n
-			q_data[i_time]['absBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rm)[spid]
-			q_data[i_time]['argBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rm)[spid]
-			q_data[i_time]['absBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rm)[spid]
-			q_data[i_time]['argBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rm)[spid]
-			q_data[i_time]['absBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rs)[spid]
-			q_data[i_time]['argBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rs)[spid]
-			q_data[i_time]['absBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rs)[spid]
-			q_data[i_time]['argBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rs)[spid]
-			q_data[i_time]['absBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rp)[spid]
-			q_data[i_time]['argBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rp)[spid]
-			q_data[i_time]['absBr_max'][:len(spectrum.n)] = np.transpose(spectrum.absBr_max)[spid]
-			q_data[i_time]['absFlux_max'][:len(spectrum.n)] = np.transpose(spectrum.absFlux_max)[spid]
+			if add_spectrum:
+				spid = list(spectrum.dimof[0]).index(tt)
+				q_data[i_time]['n'][:len(spectrum.n)] = spectrum.n
+				q_data[i_time]['absBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rm)[spid]
+				q_data[i_time]['argBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rm)[spid]
+				q_data[i_time]['absBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rm)[spid]
+				q_data[i_time]['argBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rm)[spid]
+				q_data[i_time]['absBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rs)[spid]
+				q_data[i_time]['argBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rs)[spid]
+				q_data[i_time]['absBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rs)[spid]
+				q_data[i_time]['argBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rs)[spid]
+				q_data[i_time]['absBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rp)[spid]
+				q_data[i_time]['argBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rp)[spid]
+				q_data[i_time]['absBr_max'][:len(spectrum.n)] = np.transpose(spectrum.absBr_max)[spid]
+				q_data[i_time]['absFlux_max'][:len(spectrum.n)] = np.transpose(spectrum.absFlux_max)[spid]
 			
 			i_time += 1
 		
@@ -263,7 +263,7 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/' ) :
 
 fail_shots = [29961]
 
-def create_db():
+def create_db(add_spectrum=False):
 	from glob import glob
 
 	abs_srcdir = os.environ.get('abs_top_srcdir')
@@ -276,12 +276,12 @@ def create_db():
 		shot_char_pos = fname.find( r'dsx3_' )+5
 		shot = np.int( fname[shot_char_pos:shot_char_pos+5] )
 		if shot not in fail_shots:
-			q_list.append( read_te_prof( shot, data_dir ) )
+			q_list.append( read_te_prof( shot, data_dir, add_spectrum ) )
 			n_shots +=1
 
 	q_all_data = np.concatenate( q_list )
 
-	np.save( 'te_db_2', q_all_data, allow_pickle=False )
+	np.save( 'te_db_1', q_all_data, allow_pickle=False )
 	print ('Saved %d profiles from %d shots.' % ( q_all_data.shape[0], n_shots ))
 
 

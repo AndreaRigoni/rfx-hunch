@@ -13,6 +13,35 @@ import matplotlib.colors as colors
 import copy
 import models.base
 
+import Hunch_utils  as Htls
+
+
+
+class ComposableAccess(Htls.Struct):
+    __metaclass__ = abc.ABCMeta            
+    _data = np.empty(1,dtype=None)
+
+    def __init__(self, *ref):
+        super().__init__(self, _data = ref[0])
+        
+    def __getattr__(self, name):
+        return self._data[name]
+
+    def __setattr__(self, name, val):
+        self._data[name] = val
+    
+    def __getitem__(self, key):        
+        return self.get_item_byname(key)
+
+    def get_item_byname(self, key):
+        fields = key.split('~')
+        if len(fields) > 1: 
+            val = np.concatenate([ np.atleast_1d(self.get_item_byname(k)) for k in fields ])
+        else:
+            try:    val = self._data[key]
+            except: val = np.nan #np.full([len(self)], self._null)                
+        return val   
+
 
 class Dummy_g1data(models.base.Dataset):
 
@@ -42,18 +71,37 @@ class Dummy_g1data(models.base.Dataset):
         self._dataset = None
 
 
+
+
     def buffer(self, counts = None):
         if counts is None: counts = self._counts
         else             : self._counts = counts
         size = self._size
         dtype = np.dtype ( [  ('x', '>f4', (size,) ),
                               ('y', '>f4', (size,) ),
+                              ('y_min', np.float32),
+                              ('y_max', np.float32),
+                              ('y_mean', np.float32),
+                              ('y_median', np.float32),
+                              ('l_magic', np.float32),
+                              ('l_mean_gain', np.float32),
+                              ('l_mean_sigma', np.float32),
                               ('l', np.int32),
                            ] )
         ds = np.empty([counts], dtype=dtype)
         for i in range(counts):
             s_pt,l = self.gen_pt(i)
-            ds[i] = (s_pt[:,0], s_pt[:,1], l)
+            ds[i] = (
+                     s_pt[:,0], s_pt[:,1], 
+                     np.nanmin(s_pt[:,1]),
+                     np.nanmax(s_pt[:,1]),
+                     np.nanmean(s_pt[:,1]),
+                     np.nanmedian(s_pt[:,1]),
+                     float(l)/len(self.kinds),
+                     np.mean(self.kinds[l]['gain']),
+                     np.mean(self.kinds[l]['sigma']),
+                     l, 
+                    )
         self._dataset = ds
         return self
     
@@ -67,7 +115,8 @@ class Dummy_g1data(models.base.Dataset):
     def __getitem__(self, key):
         assert self._dataset is not None, 'please fill buffer first'
         if isinstance(key, int):
-            return self._dataset[key]
+            return ComposableAccess(self._dataset[key])
+            # return self._dataset[key]
         elif isinstance(key, range):
             return self._dataset[key]
         elif isinstance(key, slice):
@@ -84,6 +133,8 @@ class Dummy_g1data(models.base.Dataset):
             return val
         else:
             print("not supported index: ",type(key))
+
+
 
     # set by reference
     def __setitem__(self, key, value):
@@ -167,6 +218,21 @@ class Dummy_g1data(models.base.Dataset):
                     return
         return tf.data.Dataset.from_generator(gen, types, shape)
         
+
+    def tf_tuple_compose(self, fields=[]):
+        def gen():
+            import itertools
+            for i in itertools.count(0):
+                if i < len(self):
+                    pt = self[i]
+                    yield tuple([ pt[n] for n in fields])
+                else:
+                    return
+        d0 = tuple([ self[0][n] for n in fields])
+        types = tuple([tf.convert_to_tensor(x).dtype for x in d0])
+        shape = tuple([np.shape(x) for x in d0])
+        return tf.data.Dataset.from_generator(gen, types, shape)
+
     ds_tuple = property(get_tf_dataset_tuple)
     ds_array = property(get_tf_dataset_array)
 

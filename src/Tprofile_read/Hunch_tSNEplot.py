@@ -6,6 +6,8 @@ from __future__ import print_function
 import numpy as np
 import Hunch_utils as Htils
 
+from Dataset_QSH import *
+
 import tensorflow as tf
 import abc
 
@@ -35,7 +37,7 @@ class SNEPlot():
         self._model = model
 
     def set_data(self, data):        
-        assert isinstance(data, Htils.QSH_Dataset), "Input variables should be QSH dataset"
+        assert isinstance(data, QSH_Dataset), "Input variables should be QSH dataset"
         self._data = data    
     
 

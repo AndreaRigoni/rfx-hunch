@@ -15,6 +15,7 @@ import Hunch_utils  as Htls
 import Hunch_lsplot as Hplt
 
 import Dummy_g1data as dummy
+import Dataset_QSH
 import models
 import models.AEFIT
 
@@ -22,7 +23,7 @@ import models.AEFIT
 import os  
 
 
-qsh = Htls.QSH_Dataset()
+qsh = Dataset_QSH.Dataset_QSH()
 import os
 file = ipysh.abs_builddir+'/te_db_r15.npy'
 if os.path.isfile(file):

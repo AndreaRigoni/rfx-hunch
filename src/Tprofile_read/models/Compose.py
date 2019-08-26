@@ -19,30 +19,53 @@ class Compose(models.base.VAE):
         pass
 
     def set_model(self, model):
-        self._model = model        
+        self._model = model
+        self.latent_dim = model.latent_dim
         return self
     
     def compose(self, autoencoders):
         from itertools import chain 
         # for m in vaes: assert issubclass(type(m), VAE), 'please set a valid VAE as inner model'
         vaes = autoencoders
-        i_inputs   = list(chain.from_iterable([ m.inference_net.inputs for m in vaes ]))
-        i_outputs  = list(chain.from_iterable([ m.inference_net.outputs for m in vaes ]))
-        inf_split  = tf.keras.layers.Lambda( lambda x: tf.split(x, num_or_size_splits=2, axis=1)[0] )
-        inf_append = tf.keras.layers.Concatenate()( [ inf_split(x) for x in i_outputs ] )
-        self.inference_net = tf.keras.Model(i_inputs,[self._model.inference_net(inf_append)], name='compose_inference_net')
+        def get_inference_inputs(m):
+            if hasattr(m, 'inference_net'): return m.inference_net.inputs
+            else                          : return m.inputs
+        def get_inference_outputs(m):
+            if hasattr(m, 'inference_net'): 
+                out = m.inference_net.outputs
+                inf_split = tf.keras.layers.Lambda( lambda x: tf.split(x, num_or_size_splits=2, axis=1)[0] )
+                return [ inf_split(x) for x in out ]
+            else: 
+                return m.outputs
+        def get_generative_inputs(m):
+            if hasattr(m, 'generative_net'): return m.generative_net.inputs
+            else                          : return m.inputs
+        def get_generative_outputs(m):
+            if hasattr(m, 'generative_net'): return m.generative_net.outputs
+            else                          : return m.outputs
+        def get_inference_inputshape(m):
+            if hasattr(m, 'inference_net'): return m.inference_net.input_shape
+            else                          : return m.input_shape
 
-        g_outputs = list(chain.from_iterable([ m.generative_net.outputs for m in vaes ]))
-        g_inputs  = list(chain.from_iterable([ m.generative_net.inputs for m in vaes ]))
-        gen_append = tf.keras.Model(g_inputs, g_outputs)
-        splits_z = [ inpt.shape[1] for inpt in g_inputs ]        
-        dout  = tf.keras.layers.Dense(sum(splits_z))(self._model.generative_net.output)
-        gen_split = tf.keras.layers.Lambda( lambda x: tf.split(x,num_or_size_splits=splits_z, axis=1))(dout)        
-        self.generative_net = tf.keras.Model(self._model.generative_net.inputs, [gen_append(gen_split)], name='compose_generative_net')
+        i_inputs   = list(chain.from_iterable([ get_inference_inputs(m) for m in vaes ]))
+        i_outputs  = list(chain.from_iterable([ get_inference_outputs(m) for m in vaes ]))
+        inf_append = tf.keras.layers.Concatenate()( i_outputs )
+        self.inference_net = tf.keras.Model(i_inputs, self._model.inference_net(inf_append), name='compose_inference_net')
+
         
-        i_inputs_shapes = [ m.inference_net.input_shape for m in vaes ]
+        g_outputs = list(chain.from_iterable([ get_generative_outputs(m) for m in vaes ]))
+        g_inputs  = list(chain.from_iterable([ get_generative_inputs(m) for m in vaes ]))
+        gen_append = tf.keras.Model(g_inputs, g_outputs)
+        splits_z = [ inpt.shape[1] for inpt in g_inputs ]
+        dout  = self._model.generative_net.output
+        gen_split = tf.keras.layers.Lambda( lambda x: tf.split(x,num_or_size_splits=splits_z, axis=1))(dout)        
+        self.generative_net = tf.keras.Model(self._model.generative_net.inputs, gen_append(gen_split), name='compose_generative_net')
+        
+        i_inputs_shapes = [ get_inference_inputshape(m) for m in vaes ]
         print(i_inputs_shapes)
         # self.build(input_shape=i_inputs_shapes)
+        self.inference_net.build(input_shape=i_inputs_shapes)
+        self.generative_net.build(input_shape=self._model.generative_net.input_shape)
 
         self._mkids = vaes
         self.compile(
@@ -51,21 +74,23 @@ class Compose(models.base.VAE):
         )
         return self
 
-
+    @tf.function
     def reparametrize(self, z_mean, z_log_var):
         batch = tf.shape(z_mean)[0]
         dim = tf.shape(z_mean)[1]
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
     
-    def encode(self, X, training=None):
+    @tf.function
+    def encode(self, X, training=False):
         mean, logvar = tf.split(self.inference_net(X, training=training), num_or_size_splits=2, axis=1)
         return mean, logvar
 
-    def decode(self, s, training=None, apply_sigmoid=None):
+    @tf.function
+    def decode(self, s, training=False, apply_sigmoid=None):
         x = self.generative_net(s, training=training)
-        if training is not None and apply_sigmoid is True:
-            x = tf.cond(training, lambda: x , lambda: tf.sigmoid(x))
+        if apply_sigmoid is True:
+            if isinstance(x, list): x = [ tf.sigmoid(X) for X in x]
         return x
     
     def call(self, xy, training=True):

@@ -13,6 +13,8 @@ import abc
 
 import models
 import models.AEFIT4
+import models.AEFIT5
+import models.Compose
 
 class LSPlot():
     __metaclass__ = abc.ABCMeta    
@@ -34,6 +36,7 @@ class LSPlot():
         }) + argd
         self._model = None
         self._data  = None
+        self._feed_data  = None
         self._browse_model = None
         
     def set_model(self, model):
@@ -123,7 +126,7 @@ class LSPlotBokeh(LSPlot):
             if name: self._figure_ls.select(name=name).visible = True
 
         self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],tbordo=[],
-                                                               label=[],Ip=[],dsxm=[],dens=[],F=[],TH=[],POW=[]
+                                                               label=[],Ip=[],dsxm=[],dens=[],F=[],TH=[],NS=[]
                                                                ) )
         self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)        
         
@@ -143,7 +146,7 @@ class LSPlotBokeh(LSPlot):
         add_sl_glyph('dsxm',)
         add_sl_glyph('log dens', field='dens',)
         add_sl_glyph('F',   )
-        add_sl_glyph('POW', )
+        add_sl_glyph('NS', )
 
         self._figure_ls.legend[0].visible = False
         toggle_ls_glyphs(None)
@@ -173,8 +176,8 @@ class LSPlotBokeh(LSPlot):
         self._b7.on_click(lambda: toggle_ls_glyphs('log dens'))
         self._b8 = LSPlotBokeh.Button(label="F", width=150)
         self._b8.on_click(lambda: toggle_ls_glyphs('F'))
-        self._b9 = LSPlotBokeh.Button(label="POW", width=150)
-        self._b9.on_click(lambda: toggle_ls_glyphs('POW'))
+        self._b9 = LSPlotBokeh.Button(label="NS", width=150)
+        self._b9.on_click(lambda: toggle_ls_glyphs('NS'))
 
         self._layout = LSPlotBokeh.column( 
             LSPlotBokeh.row(self._figure_ls,self._figure_gn,
@@ -214,10 +217,12 @@ class LSPlotBokeh(LSPlot):
     #     save(self._layout)
 
     
-    def set_data(self, data, counts=200):
+    def set_data(self, data, feed_data=None, counts=200):
         super(LSPlotBokeh, self).set_data(data)
         self._counts = counts
-        self._cold = []        
+        self._cold = []
+        if feed_data is None: self._feed_data = self._data.ds_array
+        else                : self._feed_data = feed_data
         ds = self._data
         if isinstance(ds, Dummy_g1data.Dummy_g1data):
             # from bokeh.palettes import Category10
@@ -241,11 +246,12 @@ class LSPlotBokeh(LSPlot):
     def update_ls(self):
         model = self._model
         counts = self._counts
-        ds   = self._data.ds_array.batch(counts).take(1)
+        ds   = self._feed_data.batch(counts).take(1)
         dc   = self._data[0:counts]
         dc._counts = counts # to handle a bug that is going to be fixed soon
-        ts,tl = [x for x in ds][0]
         
+        
+        ts,tl = [x for x in ds][0]
         def normalize(data):
             return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -259,6 +265,9 @@ class LSPlotBokeh(LSPlot):
         #         tSNE_v.fit(v)
         
         ## IS VAE
+        if issubclass(type(model), models.Compose.Compose):
+            tl = tl[0]
+            
         if issubclass(type(model), models.base.VAE):
             m,v = model.encode(ts, training=False)
             z = model.reparametrize(m,v)
@@ -288,7 +297,7 @@ class LSPlotBokeh(LSPlot):
                         dsxm=normalize(dc['Te_dsxm']),
                         dens=normalize(dc['dens']),
                         F=normalize(dc['F']),
-                        POW=normalize(dc['POW']),
+                        NS=normalize(dc['NS']),
                         label=tl.numpy()
                     )
             self._data_ls.data = data
@@ -299,6 +308,7 @@ class LSPlotBokeh(LSPlot):
     def plot_generative(self, x, y):
         md = self._model
         XY = md.decode(tf.convert_to_tensor([[x,y]]), training=False, apply_sigmoid=True)
+        if isinstance(XY, list): XY = XY[0]   # if list of outputs take first one
         X,Y = tf.split(XY[0], 2)
         data = dict( x=X.numpy(), y=Y.numpy() )
         self._data_gn.data = data

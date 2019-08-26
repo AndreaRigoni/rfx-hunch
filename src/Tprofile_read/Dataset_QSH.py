@@ -45,7 +45,6 @@ class QSH(Htls.Struct):
     def __init__(self, *ref):
         super().__init__(self, _data = ref[0])
         
-
     def __getattr__(self, name):
         return self._data[name]
 
@@ -55,14 +54,30 @@ class QSH(Htls.Struct):
     def __getitem__(self, key):        
         return self._get_item_byname(key)
 
-    def _get_item_byname(self, key):
-        fields = key.split('_')
+    @property
+    def Bt(self):
+        abs = self['absBt_rm']
+        arg = self['argBt_rm']
+        re,im = abs * (np.cos(arg), np.sin(arg))
+        return np.concatenate([re,im])
+
+    def _get_item_byname(self, key, dim=None):
+        key = key.split(':')
+        if len(key) > 1: 
+            dim = int(key[1])
+        key = key[0]
+        fields = key.split('~')
         if len(fields) > 1: 
-            val = np.concatenate([ np.atleast_1d(self._get_item_byname(k)) for k in fields ])
+            val = np.concatenate([ np.atleast_1d(self._get_item_byname(k, dim)) for k in fields ])
         else:
-            try:    val = self._data[key]
-            except: val = np.full([len(self)], self._null)
-        return val   
+            try: val = self._data[key]
+            except: 
+                try: val = getattr(self, key)
+                except: val = np.nan 
+            if dim is not None: val = val[0:dim]            
+        return val
+
+        
 
     def get_pulse(self):
         # almeno verifico che sia un impulso di RFX-mod	

@@ -52,6 +52,7 @@ class Stat2(Struct):
     m_mean   = 0.
     m_M2     = 0.
     m_count  = 0 
+    
     def __add__(self, data):
         self.m_count += 1
         if data < self.m_min: self.m_min = data

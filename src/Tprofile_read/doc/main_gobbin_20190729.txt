@@ -1,0 +1,26 @@
+Ciao Andrea, 
+
+come mi chiedevi venerdì, ho creato un database per il Thomson Scattering. 
+Si trova in /scratch/gobbin/rigoni/thomson. 
+
+Ogni file puoi aprirlo in IDL  con : restore, 'thomson_xxxxx.sav' (stesso formato di quelli che ti ho passato la volta scorsa). 
+
+Dentro trovi: 
+r: posizioni in metri
+t: istanti in secondi di sparo del laser
+te_r : temperature, matrice in [posizioni x tempi]
+
+Ad esempio se vuoi plottare il profilo di temperatura elettronica al secondo istante disponibile t(2) basta che fai: 
+
+plot,r,te_r(*,2), ps=4
+
+Per ogni punto c'è anche l'errore contenuto in ete_r . 
+
+Attenzione: devi togliere tutti i punti minori o uguali a zero e quelli sopra i 2000 eV che sicuramente non sono realistici. 
+
+Il Thomson non era presente per tutti gli spari dove c'era il dsx3 ma comunque per gran parte di essi. 
+
+Se hai domande comunque son qua! 
+
+ciao, 
+Marco

@@ -57,27 +57,27 @@ class NaNDense(tf.keras.layers.Dense):
 
 
 
-# class Reparametrize1D(tf.keras.layers.Layer):
-#     """ VAE REPARAMETRIZATION LAYER
-#     """
-#     def __init__(self, **kwargs):
-#         super(Reparametrize1D, self).__init__(**kwargs)
+class Reparametrize1D(tf.keras.layers.Layer):
+    """ VAE REPARAMETRIZATION LAYER
+    """
+    def __init__(self, **kwargs):
+        super(Reparametrize1D, self).__init__(**kwargs)
     
-#     @tf.function
-#     def reparametrize(self, z_mean, z_log_var):
-#         batch = tf.shape(z_mean)[0]
-#         dim   = tf.shape(z_mean)[1]
-#         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
-#         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+    @tf.function
+    def reparametrize(self, z_mean, z_log_var):
+        batch = tf.shape(z_mean)[0]
+        dim   = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
-#     @tf.function
-#     def call(self, inputs, training=True):
-#         inputs = tf.convert_to_tensor(inputs)
-#         mean, logvar = tf.split(inputs, num_or_size_splits=2, axis=1)
-#         akl_loss = -0.5 * tf.reduce_sum(1. + logvar - tf.square(mean) - tf.exp(logvar), axis=1)
-#         mean = self.reparametrize(mean,logvar)
-#         self.add_loss( akl_loss, inputs=True )
-#         return mean
+    @tf.function
+    def call(self, inputs, training=True):
+        inputs = tf.convert_to_tensor(inputs)
+        mean, logvar = tf.split(inputs, num_or_size_splits=2, axis=1)
+        akl_loss = -0.5 * tf.reduce_sum(1. + logvar - tf.square(mean) - tf.exp(logvar), axis=1)
+        mean = self.reparametrize(mean,logvar)
+        self.add_loss( akl_loss, inputs=True )
+        return mean
         
     
     
@@ -95,10 +95,10 @@ class NaNDense(tf.keras.layers.Dense):
 class AEFIT5(models.base.VAE):
     ''' General Autoencoder Fit Model for TF 2.0
     '''    
-    def __init__(self, feature_dim=40, latent_dim=2, dprate = 0., activation=tf.nn.relu, beta=1., 
+    def __init__(self, feature_dim=40, latent_dim=2, dprate=0., activation=tf.nn.relu, beta=1., 
                  geometry=[20,20,10], scale=1, *args, **kwargs):
         self.super = super(AEFIT5, self)
-        self.super.__init__()
+        self.super.__init__(*args, **kwargs)
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim        
         self.dprate = dprate
@@ -108,12 +108,14 @@ class AEFIT5(models.base.VAE):
         self.apply_sigmoid = False
         self.bypass = False
         
-        inference_net, generative_net = self.set_model(feature_dim, latent_dim, dprate=dprate, scale=scale, 
+        inference_net, generative_net = self.set_model(feature_dim, latent_dim, 
+                                                        dprate=dprate,
+                                                        scale=scale, 
                                                         activation=activation,
                                                         geometry=geometry)
         self.inference_net = inference_net
         self.generative_net = generative_net        
-        self.build(input_shape=inference_net.input_shape)
+        # self.build(input_shape=inference_net.input_shape)
         self.compile(
             optimizer  = tf.keras.optimizers.Adam(learning_rate=1e-3),
             loss       = self.compute_cross_entropy_loss,
@@ -124,7 +126,7 @@ class AEFIT5(models.base.VAE):
 
 
     
-    def set_model(self, feature_dim, latent_dim, dprate = 0., activation=tf.nn.relu, 
+    def set_model(self, feature_dim, latent_dim, dprate=0., activation=tf.nn.relu, 
                   geometry=[20,20,10], scale=1):
 
         class LsInitializer(tf.keras.initializers.Initializer):
@@ -210,6 +212,16 @@ class AEFIT5(models.base.VAE):
             kl_loss = 0.
         self.add_loss( lambda: self.beta * kl_loss, inputs=True )
         return XY
+    
+    ## IF SEEMS TO FAIL TO FIND A GOOD CONVERGENCE
+    def train_step(self, xy, training=True):
+        with tf.GradientTape() as tape:
+            XY = self.call(xy, training=training)
+            loss = tf.reduce_mean( self.loss(xy, XY) + self.losses[0] )
+        if training:
+            gradients = tape.gradient(loss, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+        return loss
 
     def compile(self, optimizer=None, loss=None, logit_loss=False, metrics=None, **kwargs):
         if optimizer is None: 

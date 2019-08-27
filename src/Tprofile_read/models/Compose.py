@@ -47,21 +47,25 @@ class Compose(models.base.VAE):
             if hasattr(m, 'inference_net'): return m.inference_net.input_shape
             else                          : return m.input_shape
 
+
         i_inputs   = list(chain.from_iterable([ get_inference_inputs(m) for m in vaes ]))
         i_outputs  = list(chain.from_iterable([ get_inference_outputs(m) for m in vaes ]))
         inf_append = tf.keras.layers.Concatenate()( i_outputs )
         self.inference_net = tf.keras.Model(i_inputs, self._model.inference_net(inf_append), name='compose_inference_net')
-
         
         g_outputs = list(chain.from_iterable([ get_generative_outputs(m) for m in vaes ]))
         g_inputs  = list(chain.from_iterable([ get_generative_inputs(m) for m in vaes ]))
         gen_append = tf.keras.Model(g_inputs, g_outputs)
+        
         splits_z = [ inpt.shape[1] for inpt in g_inputs ]
+
         dout  = self._model.generative_net.output
         gen_split = tf.keras.layers.Lambda( lambda x: tf.split(x,num_or_size_splits=splits_z, axis=1))(dout)        
-        self.generative_net = tf.keras.Model(self._model.generative_net.inputs, gen_append(gen_split), name='compose_generative_net')
+        self.generative_net = tf.keras.Model(self._model.generative_net.inputs, gen_append(gen_split), name='compose_generative_net')        
         
         i_inputs_shapes = [ get_inference_inputshape(m) for m in vaes ]
+
+
         print(i_inputs_shapes)
         # self.build(input_shape=i_inputs_shapes)
         self.inference_net.build(input_shape=i_inputs_shapes)

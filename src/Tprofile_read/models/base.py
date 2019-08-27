@@ -40,10 +40,8 @@ class THunchModel(tf.keras.Model):
 
     @abc.abstractmethod
     def train(self, dataset, epoch=10, batch=200, learning_rate=None):
-        dataset_test  = dataset[0:batch]
-        dataset_train = dataset[batch+1:]                
-        ds = dataset_test.ds_array
-        dt = dataset_train.ds_array
+        ds = dataset.ds_array.take(batch)
+        dt = dataset.ds_array.skip(batch)
 
         if learning_rate is not None:
             self.learning_rate = learning_rate

@@ -54,13 +54,6 @@ class QSH(Htls.Struct):
     def __getitem__(self, key):        
         return self._get_item_byname(key)
 
-    @property
-    def Bt(self):
-        abs = self['absBt_rm']
-        arg = self['argBt_rm']
-        re,im = abs * (np.cos(arg), np.sin(arg))
-        return np.concatenate([re,im])
-
     def _get_item_byname(self, key, dim=None):
         key = key.split(':')
         if len(key) > 1: 
@@ -68,7 +61,7 @@ class QSH(Htls.Struct):
         key = key[0]
         fields = key.split('~')
         if len(fields) > 1: 
-            val = np.concatenate([ np.atleast_1d(self._get_item_byname(k, dim)) for k in fields ])
+            val = np.concatenate([ np.atleast_1d(self._get_item_byname(k, dim)) for k in fields ], axis=-1)
         else:
             try: val = self._data[key]
             except: 
@@ -76,24 +69,27 @@ class QSH(Htls.Struct):
                 except: val = np.nan 
             if dim is not None: val = val[0:dim]            
         return val
-
         
-
-    def get_pulse(self):
+    @property
+    def pulse(self):
         # almeno verifico che sia un impulso di RFX-mod	
         shot = int(self.label.split(b'_')[0])
         if ( shot < 15600 or shot > 39391 ) :
 	        raise UserWarning('Not a RFX-mod shot')
         return shot
 
-    def get_start(self):
+    @property
+    def start(self):
         ''' get start of the profile in relative time [ms]*1E-1
         '''
         return int(self.label.split(b'_')[1])
 
-    # addiditonal properties
-    pulse    = property(get_pulse)
-    start    = property(get_start)
+    @property
+    def Bt(self):
+        abs = self['absBt_rm']
+        arg = self['argBt_rm']
+        re,im = abs * (np.cos(arg), np.sin(arg))
+        return np.concatenate([re,im], axis=-1 )
 
 
     def plot_countour(self, ax = None):
@@ -128,22 +124,19 @@ class Dataset_QSH(models.base.Dataset):
     # return by reference
     def __getitem__(self, key):
         if isinstance(key, int):
-            return QSH(self._dataset[key], self.dim)
+            return QSH(self._dataset[key])
         elif isinstance(key, range):
             return self._dataset[key]
         elif isinstance(key, slice):
-            qsh = copy.deepcopy(self)
-            qsh._dataset = self._dataset[key]
-            return qsh
+            return self._dataset[key]
         elif isinstance(key, str):
-            try:    val = self._dataset[:][key]
-            except: val = np.full([len(self)], self._null)
-            return val
+            return self._dataset[:][key]
         elif isinstance(key, tuple):
-            val = [ self[:][k] for k in key ]
-            return val
+            return [ self[k] for k in key ]
         else:
             print("not supported index: ",type(key))
+
+
 
     # set by reference
     def __setitem__(self, key, value):
@@ -170,6 +163,10 @@ class Dataset_QSH(models.base.Dataset):
     def dictionary(self):
         a = self.data
         return {name:a[name] for name in a.dtype.names}
+
+    @property
+    def ls(self):
+        return self.data.dtype.names
 
     def __len__(self):
         return len(self._dataset)
@@ -301,7 +298,23 @@ class Dataset_QSH(models.base.Dataset):
         for n in fields:
             normalize(n)
         self.set_null(_null)
-        
+
+
+    ## WORKING ON ....
+    # def set_stats(self, fields=['prel','te','rho']):
+    #     import scipy.stats
+    #     stats = {}
+    #     for n in fields:
+    #         _null = self._null 
+    #         if not np.isnan(self._null):
+    #             print("Warning normilizing not a null=nan qsh... this will not normalize null value")
+    #             self.set_null(np.nan)
+    #         stats[n] = scipy.stats.describe(self[n], nan_policy='omit')
+    #         self.set_null(_null)
+
+
+
+
 
     def missing_values_mask(self, datasets=None):
         from sklearn.impute import MissingIndicator

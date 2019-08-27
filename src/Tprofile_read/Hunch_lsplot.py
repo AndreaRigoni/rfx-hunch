@@ -98,6 +98,10 @@ class LSPlotBokeh(LSPlot):
 
         self._figure_ls = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,box_zoom,zoom_in,zoom_out,reset,crosshair")
         self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
+        self._figure_Sabs = LSPlotBokeh.figure(plot_width=400, plot_height=200,tools="",x_range=(0,1),y_range=(0,1))
+        self._figure_Sarg = LSPlotBokeh.figure(plot_width=400, plot_height=200,tools="",x_range=(0,1),y_range=(0,1))
+        
+
         self._div = LSPlotBokeh.Div(width=800, height=10, height_policy="fixed")        
 
         # trace mouse position
@@ -193,6 +197,7 @@ class LSPlotBokeh(LSPlot):
                     self._b9,
                 )),
             #LSPlotBokeh.row(self._div)
+            # LSPlotBokeh.column( self._figure_Sabs, self._figure_Sarg ),
         )
         
 
@@ -216,6 +221,9 @@ class LSPlotBokeh(LSPlot):
     #     output_file(filename)
     #     save(self._layout)
 
+    # def set_model(self, model):
+    #     model_outputs_names = [ n. for n ]
+    #     pass
     
     def set_data(self, data, feed_data=None, counts=200):
         super(LSPlotBokeh, self).set_data(data)
@@ -248,7 +256,7 @@ class LSPlotBokeh(LSPlot):
         counts = self._counts
         ds   = self._feed_data.batch(counts).take(1)
         dc   = self._data[0:counts]
-        dc._counts = counts # to handle a bug that is going to be fixed soon
+        # dc._counts = counts # to handle a bug that is going to be fixed soon
         
         
         ts,tl = [x for x in ds][0]
@@ -302,16 +310,19 @@ class LSPlotBokeh(LSPlot):
                     )
             self._data_ls.data = data
         
-        
 
-
-    def plot_generative(self, x, y):
+    def plot_generative(self, x, y, lasso_list=None):
         md = self._model
         XY = md.decode(tf.convert_to_tensor([[x,y]]), training=False, apply_sigmoid=True)
         if isinstance(XY, list): XY = XY[0]   # if list of outputs take first one
         X,Y = tf.split(XY[0], 2)
         data = dict( x=X.numpy(), y=Y.numpy() )
         self._data_gn.data = data
+
+    def plot_spectrum(self, x, y, lasso_list=None):
+        ''' plot reconstructed spectrum input '''
+        pass
+
 
     def display_event(self, div, attributes=[], style = 'float:left;clear:left;font_size=10pt'):
         "Build a suitable CustomJS to display the current event in the div model."

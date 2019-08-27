@@ -44,7 +44,7 @@ qsh.set_normal_positive()
 
 print("QSH rebalanced 15 points size: ", len(qsh))
 
-vae = models.AEFIT.AEFIT(latent_dim=2, feature_dim=30,  dprate=0., scale=1, beta=0.)
+# vae = models.AEFIT.AEFIT(latent_dim=2, feature_dim=30,  dprate=0., scale=1, beta=0.)
 
 
 

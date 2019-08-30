@@ -98,8 +98,9 @@ class RelUnitNorm(tf.keras.constraints.Constraint):
         return {'axis': self.axis}
 
 
+tf.keras.Model.fit
 
-class Relevance1D(tf.keras.layers.Layer):
+class Relevance1D(tf.keras.layers.Dropout):
     def __init__(self,
                 activation=None,
                 kernel_initializer='glorot_uniform',
@@ -108,7 +109,7 @@ class Relevance1D(tf.keras.layers.Layer):
                 **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-        super(Relevance1D, self).__init__( **kwargs )
+        super(Relevance1D, self).__init__( 0., **kwargs )
         self.activation = tf.keras.activations.get(activation)
         self.kernel_initializer = tf.keras.initializers.get(kernel_initializer)
         self.kernel_constraint = tf.keras.constraints.get(kernel_constraint)        
@@ -146,6 +147,7 @@ class Relevance1D(tf.keras.layers.Layer):
         outputs = tf.multiply( inputs , self.kernel )
         # if self.activation is not None:
         #     return self.activation(outputs)  # pylint: disable=not-callable
+        outputs = super(Relevance1D, self).call(outputs)
         return outputs
 
     def compute_output_shape(self, input_shape):
@@ -165,7 +167,7 @@ class Relevance1D(tf.keras.layers.Layer):
 
 
 
-tf.keras.regularizers.l1
+tf.keras.layers.Dropout
 
 
 """

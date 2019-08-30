@@ -122,7 +122,7 @@ class Dummy_g1data(models.base.Dataset):
         elif isinstance(key, slice):
             ds = copy.deepcopy(self)
             ds._dataset = self._dataset[key]
-            ds.counts = len(ds._dataset)
+            ds._counts = len(ds._dataset)
             return ds
         elif isinstance(key, str):
             try:    val = self._dataset[:][key]

@@ -25,6 +25,7 @@ class LSPlot():
         def __init__(self, *args, **kwargs):
             super(LSPlot.CfgDict, self).__init__(*args, **kwargs)
             self.__dict__ = self        
+
         def __add__(self, other):
             super(LSPlot.CfgDict, self).update(other)
             return self
@@ -39,11 +40,12 @@ class LSPlot():
         self._feed_data  = None
         self._browse_model = None
         
+    @abc.abstractmethod        
     def set_model(self, model):
         # assert isinstance(model, AEFIT.Hunch_VAE), "Input variables should be AEFIT"
         self._model = model
         
-        
+    @abc.abstractmethod        
     def set_data(self, data):
         # assert isinstance(data, Dummy_g1data.FiniteSequence1D), "Input variables should be FiniteSequence1D"
         self._data = data    
@@ -91,8 +93,8 @@ class LSPlotBokeh(LSPlot):
 
     
 
-    def __init__(self, *argv, **argd):
-        super(LSPlotBokeh,self).__init__(*argv,**argd)
+    def __init__(self, *args, **kwargs):
+        super(LSPlotBokeh,self).__init__(*args,**kwargs)
         self._target = None
         self._doc = None
 
@@ -102,10 +104,10 @@ class LSPlotBokeh(LSPlot):
         self._figure_Sarg = LSPlotBokeh.figure(plot_width=400, plot_height=200,tools="",x_range=(0,1),y_range=(0,1))
         
 
-        self._div = LSPlotBokeh.Div(width=800, height=10, height_policy="fixed")        
+        # self._div = LSPlotBokeh.Div(width=800, height=10, height_policy="fixed")        
 
         # trace mouse position
-        self._inx = LSPlotBokeh.TextInput(value='')
+        self._inx = LSPlotBokeh.TextInput(value='', width=150)
         self._pos = LSPlotBokeh.ColumnDataSource(data=dict(x=[0],y=[0],dim=[0]))        
         def posx_cb(attr, old, new):
             pos = self._pos
@@ -155,7 +157,7 @@ class LSPlotBokeh(LSPlot):
         self._figure_ls.legend[0].visible = False
         toggle_ls_glyphs(None)
         for event in LSPlotBokeh.point_events:
-            self._figure_ls.js_on_event(event, self.display_event(self._div, attributes=LSPlotBokeh.point_attributes))
+            self._figure_ls.js_on_event(event, self.display_event(attributes=LSPlotBokeh.point_attributes))
 
 
         # NG PLOT        
@@ -195,11 +197,14 @@ class LSPlotBokeh(LSPlot):
                     self._b7,
                     self._b8,
                     self._b9,
+                    self._inx,
                 )),
             #LSPlotBokeh.row(self._div)
             # LSPlotBokeh.column( self._figure_Sabs, self._figure_Sarg ),
         )
         
+        
+
 
 
 
@@ -291,7 +296,7 @@ class LSPlotBokeh(LSPlot):
         elif issubclass(type(model), models.base.GAN):
             if model.latent_dim == 2:
                 self._figure_ls.x_range=LSPlotBokeh.Range1d(-5,5)
-                self._figure_ls.y_range=LSPlotBokeh.Range1d(-5,5)
+                self._figure_ls.y_range=LSPlotBokeh.Range1d(-5,5)                                
                 z = m = v = tf.random.normal(tf.shape(ts))
 
         if model.latent_dim == 2:                
@@ -324,9 +329,9 @@ class LSPlotBokeh(LSPlot):
         pass
 
 
-    def display_event(self, div, attributes=[], style = 'float:left;clear:left;font_size=10pt'):
+    def display_event(self, attributes=[], style = 'float:left;clear:left;font_size=10pt'):
         "Build a suitable CustomJS to display the current event in the div model."
-        return LSPlotBokeh.CustomJS(args=dict(div=div, inx=self._inx), code="""
+        return LSPlotBokeh.CustomJS(args=dict(inx=self._inx), code="""
             var attrs = %s; var args = [];
             for (var i = 0; i<attrs.length; i++)
                 args.push(attrs[i] + '=' + Number(cb_obj[attrs[i]]).toFixed(2));
@@ -336,14 +341,14 @@ class LSPlotBokeh(LSPlot):
             // if (cb_obj.event_name == "tap")
             //    code = "tap"
             inx.value = Number(x).toFixed(3) + "," + Number(y).toFixed(3)                
-            line += "<span style=%r><b>" + cb_obj.event_name + "</b>(" + Number(x).toFixed(3) + ","
-                                                                          + Number(y).toFixed(3) + 
-                                                                          ")</span>\\n";
-            var text = div.text.concat(line);
-            var lines = text.split("\\n")
-            if (lines.length > 15)
-                lines.shift();
-            div.text = lines.join("\\n");
+            // line += "<span style=%r><b>" + cb_obj.event_name + "</b>(" + Number(x).toFixed(3) + ","
+            //                                                               + Number(y).toFixed(3) + 
+            //                                                               ")</span>\\n";
+            // var text = div.text.concat(line);
+            // var lines = text.split("\\n")
+            // if (lines.length > 15)
+            //     lines.shift();
+            // div.text = lines.join("\\n");
         """ % (attributes, style))
 
 

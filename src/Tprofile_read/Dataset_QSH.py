@@ -85,9 +85,23 @@ class QSH(Htls.Struct):
         return int(self.label.split(b'_')[1])
 
     @property
-    def Bt(self):
+    def Bt_rm(self):
         abs = self['absBt_rm']
         arg = self['argBt_rm']
+        re,im = abs * (np.cos(arg), np.sin(arg))
+        return np.concatenate([re,im], axis=-1 )
+
+    @property
+    def Br_rm(self):
+        abs = self['absBr_rm']
+        arg = self['argBr_rm']
+        re,im = abs * (np.cos(arg), np.sin(arg))
+        return np.concatenate([re,im], axis=-1 )
+
+    @property
+    def Br_rs(self):
+        abs = self['absBr_rs']
+        arg = self['argBr_rs']
         re,im = abs * (np.cos(arg), np.sin(arg))
         return np.concatenate([re,im], axis=-1 )
 
@@ -130,7 +144,7 @@ class Dataset_QSH(models.base.Dataset):
         elif isinstance(key, slice):
             return self._dataset[key]
         elif isinstance(key, str):
-            return self._dataset[:][key]
+            return QSH(self._dataset[:])[key]
         elif isinstance(key, tuple):
             return [ self[k] for k in key ]
         else:

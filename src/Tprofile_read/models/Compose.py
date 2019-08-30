@@ -70,6 +70,8 @@ class Compose(models.base.VAE):
         # self.build(input_shape=i_inputs_shapes)
         self.inference_net.build(input_shape=i_inputs_shapes)
         self.generative_net.build(input_shape=self._model.generative_net.input_shape)
+        
+        self.output_names = [ m.generative_net.output_names for m in vaes ]
 
         self._mkids = vaes
         self.compile(

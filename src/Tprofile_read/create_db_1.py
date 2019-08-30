@@ -31,8 +31,8 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 		argBt_rm    = [np.nan] * len(mode_n)
 		absBr_rm    = [np.nan] * len(mode_n)
 		argBr_rm    = [np.nan] * len(mode_n)
-		absBt_rs    = [np.nan] * len(mode_n)
-		argBt_rs    = [np.nan] * len(mode_n)
+		absFlux_rs  = [np.nan] * len(mode_n)
+		argFlux_rs  = [np.nan] * len(mode_n)
 		absBr_rs    = [np.nan] * len(mode_n)
 		argBr_rs    = [np.nan] * len(mode_n)
 		absBr_rp    = [np.nan] * len(mode_n)
@@ -46,6 +46,21 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 	n2 = max(mode_n)
 	# precalculate code variables for all toroidal modes from n1 to n2
 	# print("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   0, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2) )
+	#  0 -> raggio di risonanza
+	# +1 -> absbt alle misure
+	# -1 -> argbt alle misure (normalizzato a 180°) + m
+	# +2 -> absbr alle misure
+	# -2 -> argbr alle misure (normalizzato a 180°) + m
+	# +3 -> absbr alla risonanza
+	# -3 -> argbr alla risonanza (normalizzato a 180°) + m
+	# +4 -> absflux alla risonanza
+	# -4 -> argflux alla risonanza (normalizzato a 180°) + m
+	# +5 -> absbr al massimo
+	# +6 -> absflux al massimo
+	# +7 -> absbt alle misure in approssimazione cilindrica
+	# -7 -> argbt alle misure in approssimazione cilindrica (normalizzato a 180°)
+	# +12 -> absbr a raggio plasma
+	# -12 -> argbr a raggio plasma (normalizzato a 180°) + m
 	cn.get("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   0, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2 ) )
 	for i,n in enumerate(mode_n):
 		data.n          [i] = int(n)
@@ -56,10 +71,10 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 		data.argBt_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -1, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.absBr_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   2, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.argBr_rm   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -2, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
-		data.absBt_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
-		data.argBt_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
-		data.absBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
-		data.argBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argBr_rs   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -3, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.absFlux_rs [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
+		data.argFlux_rs [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  -4, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.absBr_rp   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,  12, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.argBr_rp   [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d, -12, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
 		data.absBr_max  [i] = cn.get("spectrum( 1 , %6.4f, %6.4f, %6.4f, %d, %d,   5, %d, 1 )" % (t0, t1, dt, -n, m, correction ) ).ravel()
@@ -122,6 +137,7 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False )
 							('dens', '>f4'),
 							('Te_dsxm', '>f4'),
 							('F',   '>f4'),
+							('TH',  '>f4'),
 							('POW', '>f4'),
 							('VT',  '>f4'),
 							('VP',  '>f4'),
@@ -148,8 +164,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False )
 							('argBt_rm', '>f4', (10,)),
 							('absBr_rm', '>f4', (10,)),
 							('argBr_rm', '>f4', (10,)),
-							('absBt_rs', '>f4', (10,)),
-							('argBt_rs', '>f4', (10,)),
+							('absFlux_rs', '>f4', (10,)),
+							('argFlux_rs', '>f4', (10,)),
 							('absBr_rs', '>f4', (10,)),
 							('argBr_rs', '>f4', (10,)),
 							('absBr_rp', '>f4', (10,)),
@@ -170,7 +186,7 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False )
 		n_times = qsh.tempi[0].shape[0]
 		t0 = np.rint(np.min(qsh.tempi[0])*1E4)
 		t1 = np.rint(np.max(qsh.tempi[0])*1E4)
-		if add_spectum:
+		if add_spectrum:
 			spectrum = read_spectrum(shot, t0=t0, t1=t1)
 
 		for k_time in np.arange( n_times ) :
@@ -228,8 +244,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False )
 			q_data[i_time]['argBt_rm'][:] = np.nan
 			q_data[i_time]['absBr_rm'][:] = np.nan
 			q_data[i_time]['argBr_rm'][:] = np.nan
-			q_data[i_time]['absBt_rs'][:] = np.nan
-			q_data[i_time]['argBt_rs'][:] = np.nan
+			q_data[i_time]['absFlux_rs'][:] = np.nan
+			q_data[i_time]['argFlux_rs'][:] = np.nan
 			q_data[i_time]['absBr_rs'][:] = np.nan
 			q_data[i_time]['argBr_rs'][:] = np.nan
 			q_data[i_time]['absBr_rp'][:] = np.nan
@@ -244,8 +260,8 @@ def read_te_prof( shot, data_dir='/scratch/gobbin/rigoni/', add_spectrum=False )
 				q_data[i_time]['argBt_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rm)[spid]
 				q_data[i_time]['absBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rm)[spid]
 				q_data[i_time]['argBr_rm'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rm)[spid]
-				q_data[i_time]['absBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBt_rs)[spid]
-				q_data[i_time]['argBt_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBt_rs)[spid]
+				q_data[i_time]['absFlux_rs'][:len(spectrum.n)] = np.transpose(spectrum.absFlux_rs)[spid]
+				q_data[i_time]['argFlux_rs'][:len(spectrum.n)] = np.transpose(spectrum.argFlux_rs)[spid]
 				q_data[i_time]['absBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rs)[spid]
 				q_data[i_time]['argBr_rs'][:len(spectrum.n)] = np.transpose(spectrum.argBr_rs)[spid]
 				q_data[i_time]['absBr_rp'][:len(spectrum.n)] = np.transpose(spectrum.absBr_rp)[spid]

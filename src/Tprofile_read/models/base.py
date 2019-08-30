@@ -2,6 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+# %matplotlib inline
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.colors as colors 
+
 import numpy as np
 import tensorflow as tf
 import abc
@@ -40,8 +45,10 @@ class THunchModel(tf.keras.Model):
 
     @abc.abstractmethod
     def train(self, dataset, epoch=10, batch=200, learning_rate=None):
-        ds = dataset.ds_array.take(batch)
-        dt = dataset.ds_array.skip(batch)
+        if issubclass(type(dataset), models.base.Dataset):
+            dataset = dataset.ds_array
+        ds = dataset.take(batch)
+        dt = dataset.skip(batch)
 
         if learning_rate is not None:
             self.learning_rate = learning_rate
@@ -49,16 +56,14 @@ class THunchModel(tf.keras.Model):
         def compute_test_loss():
             ts_loss = 0
             for data in ds.batch(batch, drop_remainder=True):
-                x,_ = data
-                ts_loss = self.train_step(x,training=False)
+                ts_loss = self.train_step(data,training=False)
             return ts_loss.numpy()
 
         for e in range(epoch):
             import sys
             print('EPOCH: ',e)
             for i,data in enumerate(dt.batch(batch, drop_remainder=True)):
-                x,_ = data
-                loss = self.train_step(x)
+                loss = self.train_step(data)
                 sys.stdout.write('it: %d - loss: %f \r'%(i,loss))
                 if self.stop_training:
                     break
@@ -180,12 +185,55 @@ class LearningRatePowDecay(tf.keras.callbacks.LearningRateScheduler):
         self.verbose  = verbose    
 
 
-def train(model, data, epoch=40, batch=200, learning_rate=1e-3, log_name=None, callbacks=None):     
+class PlotLearning(tf.keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.i = 0
+        self.x = []
+        self.losses = []
+        self.val_losses = []
+        self.acc = []
+        self.val_acc = []
+        self.fig = plt.figure()
+        
+        self.logs = []
+        plt.ion()
+        plt.show()
+
+    def on_epoch_end(self, epoch, logs={}):
+        
+        self.logs.append(logs)
+        self.x.append(self.i)
+        self.losses.append(logs.get('loss'))
+        self.val_losses.append(logs.get('val_loss'))
+        self.acc.append(logs.get('acc'))
+        self.val_acc.append(logs.get('val_acc'))
+        self.i += 1
+        _, (ax1, ax2) = plt.subplots(1, 2, sharex=True)
+        
+        # clear_output(wait=True)
+        plt.clf()
+        
+        ax1.set_yscale('log')
+        ax1.plot(self.x, self.losses, label="loss")
+        ax1.plot(self.x, self.val_losses, label="val_loss")
+        ax1.legend()
+        
+        ax2.plot(self.x, self.acc, label="accuracy")
+        ax2.plot(self.x, self.val_acc, label="validation accuracy")
+        ax2.legend()
+
+        plt.show()
+
+
+tf.keras.Model
+
+def train(model, data, validation_data=None, epoch=40, batch=200, learning_rate=1e-3, log_name=None, callbacks=None):     
     model.learning_rate = learning_rate
     if issubclass(type(data), models.base.Dataset):
         data = data.ds_array
     if batch: data = data.batch(batch, drop_remainder=True)
-    data = data.map(lambda x,y: (x,x))
+    if issubclass(type(model), models.base.VAE):
+        data = data.map(lambda x,y: (x,x))
     if callbacks is None:
         callbacks = [LearningRatePowDecay(), ResetCallback()]
     history = model.fit(data, epochs=epoch, callbacks=callbacks + tensorboard_log(log_name), verbose=1) 

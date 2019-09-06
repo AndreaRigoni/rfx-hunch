@@ -61,7 +61,7 @@ def read_spectrum(shot, connection=None, server='rat2:52368', t0=10, t1=20, dt=5
 	# -7 -> argbt alle misure in approssimazione cilindrica (normalizzato a 180°)
 	# +12 -> absbr a raggio plasma
 	# -12 -> argbr a raggio plasma (normalizzato a 180°) + m
-	cn.get("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   0, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2 ) )
+	cn.get("spectrum( 0 , %6.4f, %6.4f, %6.4f, %d, %d,   3, %d, 1, %d, %d )" % (t0, t1, dt, -7, 1, correction, n1, n2 ) )
 	for i,n in enumerate(mode_n):
 		data.n          [i] = int(n)
 		data.m          [i] = int(m)

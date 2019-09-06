@@ -229,7 +229,9 @@ def train(model, data, validation_data=None, epoch=40, batch=200, learning_rate=
     model.learning_rate = learning_rate
     if issubclass(type(data), models.base.Dataset):
         data = data.ds_array
-    if batch: data = data.batch(batch, drop_remainder=True)        
+    if batch: 
+        data = data.batch(batch, drop_remainder=True)        
+        validation_data = data.batch(batch, drop_remainder=True)
     if issubclass(type(model), models.base.VAE):
         data = data.map(lambda x,y: (x,x))
     if callbacks is None:
@@ -251,6 +253,20 @@ def train_thread(model, data, epoch=40, batch=200, learning_rate=1e-3, log_name=
             self._model.stop_training = True
     task = AsyncTrain(model, data, epoch=epoch, batch=batch, learning_rate=learning_rate, log_name=log_name, callbacks=callbacks)
     return task
+
+def fn_thread(model, fn):
+    from nbmultitask import ThreadWithLogAndControls
+    from nbmultitask import ProcessWithLogAndControls
+    class AsyncTrain(ThreadWithLogAndControls):
+        def __init__(self, model, data, **kwargs):
+            self._model = model
+            model.stop_training = False
+            super(AsyncTrain, self).__init__(target=lambda thread_print: fn(), name='async train')
+        def terminate(self):
+            self._model.stop_training = True
+    task = AsyncTrain(model, fn)
+    return task
+
 
 
 

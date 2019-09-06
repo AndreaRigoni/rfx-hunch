@@ -112,9 +112,11 @@ class QSH(Htls.Struct):
             fig = plt.figure( 'Flux' )
             fig.set_size_inches( 6, 5 )
             fig.clf()
+            fig.set_dpi(150)
             ax = plt.gca()
         fig.subplots_adjust( top=0.95, bottom=0.08, left=0.08, right=0.95, hspace=0.2, wspace=0.2 )
-        ax.contour( self.xxg, self.yyg, self.mapro )
+        cntr1 = ax.contour( self.xxg, self.yyg, self.mapro, levels=24 )        
+        # fig.colorbar(cntr1, ax=ax)
         ax.set_aspect('equal', adjustable='box')
         ax.set_title( r'%5d_%04d' % ( self.pulse, self.start ) )
 
@@ -298,6 +300,23 @@ class Dataset_QSH(models.base.Dataset):
         self._dim = n_clusters
         return k
 
+    def set_normal(self, fields=['prel','te','rho']):
+        # assert self._null == np.nan
+        _null = self._null 
+        if not np.isnan(self._null):
+            print("Warning normilizing not a null=nan qsh... this will not normalize null value")
+            self.set_null(np.nan)
+        def normalize(axis):
+            data = self[axis]
+            _min = np.nanmin(data)
+            _max = np.nanmax(data)
+            data = data - np.nanmean(data)
+            self[axis] = data / np.max( np.abs(_min), np.abs(_max) )
+        for n in fields:
+            normalize(n)
+        self.set_null(_null)
+
+
     def set_normal_positive(self, fields=['prel','te','rho']):
         # assert self._null == np.nan
         _null = self._null 
@@ -312,6 +331,8 @@ class Dataset_QSH(models.base.Dataset):
         for n in fields:
             normalize(n)
         self.set_null(_null)
+
+
 
 
     ## WORKING ON ....

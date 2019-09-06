@@ -143,7 +143,7 @@ class Relevance1D(tf.keras.layers.Dropout):
 
     def call(self, inputs):
         inputs  = tf.convert_to_tensor(inputs)
-        # inputs = tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), inputs)
+        inputs = tf.where(tf.math.is_nan(inputs), tf.zeros_like(inputs), inputs)
         outputs = tf.multiply( inputs , self.kernel )
         # if self.activation is not None:
         #     return self.activation(outputs)  # pylint: disable=not-callable
@@ -179,15 +179,16 @@ tf.keras.layers.Dropout
 .##.....##.##.....##.##.....##.##.......##......
 .##.....##..#######..########..########.########
 """
-class AEFIT5(models.base.VAE):
-    ''' General Autoencoder Fit Model for TF 2.0
+class AEFIT6(models.base.VAE):
+    ''' General Autoencoder with BatchNormalization
     '''    
-    def __init__(self, feature_dim=40, latent_dim=2, dprate=0., activation=tf.nn.relu, beta=1., 
+    def __init__(self, feature_dim=40, latent_dim=2, dprate=None, activation=tf.nn.relu, beta=1., 
                  geometry=[20,20,10], scale=1, *args, **kwargs):
-        self.super = super(AEFIT5, self)
+        self.super = super(AEFIT6, self)
         self.super.__init__(*args, **kwargs)
         self.latent_dim = latent_dim
         self.feature_dim = feature_dim        
+        if dprate is not None: print('WARNING: dprate is not used in BatchNormalization')
         self.dprate = dprate
         self.scale = scale
         self.activation = activation
@@ -211,11 +212,11 @@ class AEFIT5(models.base.VAE):
             # logit_loss = True,
             # metrics    = ['accuracy']
         )
-        print('AEFIT5 a ready:')
+        print('AEFIT6 (batch normalization dense) ready:')
 
 
     
-    def set_model(self, feature_dim, latent_dim, dprate=0., activation=tf.nn.relu, 
+    def set_model(self, feature_dim, latent_dim, dprate=0., activation='relu', 
                   geometry=[20,20,10], scale=1):
 
         class LsInitializer(tf.keras.initializers.Initializer):
@@ -233,19 +234,21 @@ class AEFIT5(models.base.VAE):
                 identity = tf.initializers.identity()(shape)
                 return tf.concat([identity, tf.zeros(shape)], axis=axis)
 
-        def add_dense_encode(self, fdim=feature_dim, ldim=latent_dim, geometry=[20,20,10,10]):
+        def add_dense_encode(self, fdim=feature_dim, ldim=latent_dim, geometry=[]):
             for _,size in enumerate(geometry):
-                self.add(tf.keras.layers.Dense(fdim*size*scale, activation=activation))
-                self.add(tf.keras.layers.Dropout(dprate))
+                self.add(tf.keras.layers.Dense(fdim*size*scale, use_bias=False, activation=None))
+                self.add(tf.keras.layers.BatchNormalization(scale=False, center=True))
+                self.add(tf.keras.layers.Activation(activation))
             if len(geometry) == 0: initializer = LsInitializer()
             else : initializer = None
             self.add(tf.keras.layers.Dense(ldim, activation='linear', use_bias=False, kernel_initializer=initializer))
             return self
 
-        def add_dense_decode(self, fdim=feature_dim, ldim=latent_dim, geometry=[10,10,20,20]):            
+        def add_dense_decode(self, fdim=feature_dim, ldim=latent_dim, geometry=[]):
             for _,size in enumerate(geometry):
-                self.add(tf.keras.layers.Dense(fdim*size*scale, activation=activation))
-                self.add(tf.keras.layers.Dropout(dprate))
+                self.add(tf.keras.layers.Dense(fdim*size*scale, use_bias=False, activation=None))
+                self.add(tf.keras.layers.BatchNormalization(scale=False, center=True))
+                self.add(tf.keras.layers.Activation(activation))
             if len(geometry) == 0: initializer = tf.initializers.identity()
             else : initializer = None
             self.add(tf.keras.layers.Dense(fdim, activation='linear', use_bias=False, kernel_initializer=initializer))            
@@ -257,17 +260,19 @@ class AEFIT5(models.base.VAE):
         ## INFERENCE ##
         inference_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(feature_dim,)),
-            tf.keras.layers.Lambda(lambda x: tf.where(tf.math.is_nan(x),tf.zeros_like(x),x)), 
-            # # NaNDense(feature_dim),
+            # tf.keras.layers.Lambda(lambda x: tf.where(tf.math.is_nan(x),tf.zeros_like(x),x)), ## substituted inside Relevance1D
+            # # NaNDense(feature_dim), ## substituted inside Relevance1D
             Relevance1D(name=self.name+'_iRlv', activation='linear', kernel_initializer=tf.initializers.ones),
-        ]).add_dense_encode(ldim=2*latent_dim, geometry=geometry)
+        ])
+        inference_net.add_dense_encode(ldim=2*latent_dim, geometry=geometry)
 
         ## GENERATION ##
         generative_net = tf.keras.Sequential( [
             tf.keras.layers.Input(shape=(latent_dim,)),
             Relevance1D(name=self.name+'_gRlv', activation='linear', kernel_initializer=tf.initializers.ones),
             #tf.keras.layers.Dense(latent_dim)
-        ]).add_dense_decode(geometry=geometry[::-1])
+        ])
+        generative_net.add_dense_decode(geometry=geometry[::-1])
         
         return inference_net, generative_net
 
@@ -291,7 +296,7 @@ class AEFIT5(models.base.VAE):
             x = tf.sigmoid(x)
         return x
 
-    def call(self, xy, training=True):
+    def call(self, xy, training=None):
         att = tf.math.is_nan(xy)
         xy  = tf.where(att, tf.zeros_like(xy), xy)
         mean, logvar = self.encode(xy, training=training)

@@ -67,7 +67,7 @@ class LSPlot():
 class LSPlotBokeh(LSPlot):
     from bokeh.io import show, output_notebook, push_notebook
     from bokeh import events
-    from bokeh.models import CustomJS, Div, Button, Slider, Toggle
+    from bokeh.models import CustomJS, Div, Button, Slider, Toggle, Span
     from bokeh.models import CustomJS, ColumnDataSource, Slider, TextInput, Range1d  
     from bokeh.layouts import column, row
     from bokeh.plotting import figure
@@ -98,11 +98,14 @@ class LSPlotBokeh(LSPlot):
         self._target = None
         self._doc = None
 
-        self._figure_ls = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,box_zoom,zoom_in,zoom_out,reset,crosshair")
-        self._figure_gn = LSPlotBokeh.figure(plot_width=400, plot_height=400,tools="pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
+        self._figure_ls = LSPlotBokeh.figure(plot_width=800, plot_height=800,tools="save,pan,box_zoom,zoom_in,zoom_out,reset,crosshair")
+        self._figure_gn = LSPlotBokeh.figure(plot_width=800, plot_height=800,tools="save,pan,zoom_in,zoom_out,reset",x_range=(0,1),y_range=(0,1))
         self._figure_Sabs = LSPlotBokeh.figure(plot_width=400, plot_height=200,tools="",x_range=(0,1),y_range=(0,1))
         self._figure_Sarg = LSPlotBokeh.figure(plot_width=400, plot_height=200,tools="",x_range=(0,1),y_range=(0,1))
-        
+        self._figure_ls.xaxis.major_label_text_font_size = "20pt"
+        self._figure_ls.yaxis.major_label_text_font_size = "20pt"
+        self._figure_gn.xaxis.major_label_text_font_size = "20pt"
+        self._figure_gn.yaxis.major_label_text_font_size = "20pt"
 
         # self._div = LSPlotBokeh.Div(width=800, height=10, height_policy="fixed")        
 
@@ -114,7 +117,8 @@ class LSPlotBokeh(LSPlot):
             x,y = [float(x.strip()) for x in new.split(',')]
             pos.data['x'][0] = x
             pos.data['y'][0] = y
-            self._doc.add_next_tick_callback(lambda: self.plot_generative(x,y))            
+            self._doc.add_next_tick_callback(lambda: self.plot_generative(x,y))
+            self._doc.add_next_tick_callback(lambda: self.plot_lsgen_point(x,y))            
         self._inx.on_change('value',posx_cb)
         
         # COLOR MAPPERS
@@ -131,11 +135,16 @@ class LSPlotBokeh(LSPlot):
             for g in self._ls_glyphs: g.visible = False                
             if name: self._figure_ls.select(name=name).visible = True
 
-        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],tbordo=[],
+        self._data_ls = LSPlotBokeh.ColumnDataSource(data=dict(selected_pt=[],mx=[],my=[],vx=[],vy=[],zx=[],zy=[],tcentro=[],tbordo=[],
                                                                label=[],Ip=[],dsxm=[],dens=[],F=[],TH=[],NS=[]
                                                                ) )
         self._figure_ls.scatter('zx','zy',name='sample', legend='sample', size=10, source=self._data_ls, color='grey', alpha=0.2, line_width=0)        
-        
+        # self._data_ls_selected_pt = LSPlotBokeh.ColumnDataSource( data=dict(x=[],y=[]) )        
+        # def add_cross():            
+        #     self._figure_ls.ray(x='x', y='y', source=self._data_ls_selected_pt, length=0, angle=0, line_width=2)
+        #     self._figure_ls.ray(x='x', y='y', source=self._data_ls_selected_pt, length=0, angle=[np.pi/2,3*np.pi/2], line_width=2)
+        # add_cross()
+
         def add_sl_glyph(name, field=None, mapper=self._mapper3):
             if field is None: field = name
             self._ls_glyphs += [self._figure_ls.circle('mx','my',name=name, legend=name,
@@ -162,8 +171,8 @@ class LSPlotBokeh(LSPlot):
 
         # NG PLOT        
         self._data_gn = LSPlotBokeh.ColumnDataSource(data=dict(x=[],y=[]))
-        self._figure_gn.line('x','y', source=self._data_gn)
-        self._figure_gn.scatter('x','y', source=self._data_gn)
+        self._figure_gn.line('x','y', source=self._data_gn, color='black', line_width=3, line_dash=[10, 10])
+        self._figure_gn.scatter('x','y', source=self._data_gn, size=10, color='blue' )
 
         # WIDGETS #
         self._b1 = LSPlotBokeh.Button(label="Update ls", button_type="success", width=150)
@@ -230,23 +239,23 @@ class LSPlotBokeh(LSPlot):
     #     model_outputs_names = [ n. for n ]
     #     pass
     
-    def set_data(self, data, feed_data=None, counts=200):
+    def set_data(self, data, feed_data=None, counts=200, show_kinds=True):
         super(LSPlotBokeh, self).set_data(data)
         self._counts = counts
         self._cold = []
         if feed_data is None: self._feed_data = self._data.ds_array
         else                : self._feed_data = feed_data
         ds = self._data
-        if isinstance(ds, Dummy_g1data.Dummy_g1data):
+        if isinstance(ds, Dummy_g1data.Dummy_g1data) and show_kinds is True:
             # from bokeh.palettes import Category10
             # import itertools
             # colors = itertools.cycle(Category10[10])
             dx = 1/ds._size
-            x = np.linspace(0+dx/2,1-dx/2,ds._size)  # spaced x axis
+            x = np.linspace(0+dx/2,1-dx/2,ds._size*10)  # spaced x axis
             for i,_ in enumerate(ds.kinds,0):
                 xy,_ = ds.gen_pt(x=x, kind=i)
                 self._cold.append( LSPlotBokeh.ColumnDataSource(data=dict(x=xy[:,0],y=xy[:,1]))  )
-                self._figure_gn.line('x','y',source=self._cold[i], line_width=3, line_alpha=0.6, color='red')
+                self._figure_gn.line('x','y',source=self._cold[i], line_width=5, line_alpha=0.6, color=self._mapper4.palette[i] )
         if self._model is not None:
             self.update_ls()
 
@@ -300,7 +309,8 @@ class LSPlotBokeh(LSPlot):
                 z = m = v = tf.random.normal(tf.shape(ts))
 
         if model.latent_dim == 2:                
-            data=dict(  mx=m[:,0].numpy(), my=m[:,1].numpy(),
+            data=dict(
+                        mx=m[:,0].numpy(), my=m[:,1].numpy(),
                         vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
                         v_sum=(v[:,0].numpy()+v[:,1].numpy()),
                         zx=z[:,0].numpy(), zy=z[:,1].numpy(),
@@ -318,11 +328,21 @@ class LSPlotBokeh(LSPlot):
 
     def plot_generative(self, x, y, lasso_list=None):
         md = self._model
-        XY = md.decode(tf.convert_to_tensor([[x,y]]), training=False, apply_sigmoid=True)
+        XY = md.decode(tf.convert_to_tensor([[x,y]]), training=False)
         if isinstance(XY, list): XY = XY[0]   # if list of outputs take first one
         X,Y = tf.split(XY[0], 2)
         data = dict( x=X.numpy(), y=Y.numpy() )
         self._data_gn.data = data
+
+    def plot_lsgen_point(self, x,y):
+        try: 
+            pt = self._figure_ls.select_one({'name': 'selected_pt'})
+            pt.glyph.x = x
+            pt.glyph.y = y
+        except:
+            pt = self._figure_ls.cross(x,y, name='selected_pt', color='black', size=30, line_width=4)
+            self._figure_ls.renderers.extend([pt])
+        pass
 
     def plot_spectrum(self, x, y, lasso_list=None):
         ''' plot reconstructed spectrum input '''
@@ -338,9 +358,8 @@ class LSPlotBokeh(LSPlot):
             var line = ""
             var x = cb_obj[attrs[0]]
             var y = cb_obj[attrs[1]]
-            // if (cb_obj.event_name == "tap")
-            //    code = "tap"
-            inx.value = Number(x).toFixed(3) + "," + Number(y).toFixed(3)                
+            if (cb_obj.event_name == "tap")
+                inx.value = Number(x).toFixed(3) + "," + Number(y).toFixed(3);
             // line += "<span style=%r><b>" + cb_obj.event_name + "</b>(" + Number(x).toFixed(3) + ","
             //                                                               + Number(y).toFixed(3) + 
             //                                                               ")</span>\\n";

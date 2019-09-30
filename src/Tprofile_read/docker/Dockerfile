@@ -1,6 +1,6 @@
 # note: it must be an ubuntu like image (see default)
 # ARG  DOCKER_IMAGE=tensorflow/tensorflow:nightly-devel-py3
-FROM tensorflow/tensorflow:2.0.0b0-py3
+FROM tensorflow/tensorflow:2.0.0b1-py3
 
 RUN apt-get update;
 

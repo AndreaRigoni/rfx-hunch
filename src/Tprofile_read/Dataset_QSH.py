@@ -114,7 +114,7 @@ class QSH(Htls.Struct):
             fig.clf()
             fig.set_dpi(150)
             ax = plt.gca()
-        fig.subplots_adjust( top=0.95, bottom=0.08, left=0.08, right=0.95, hspace=0.2, wspace=0.2 )
+            fig.subplots_adjust( top=0.95, bottom=0.08, left=0.08, right=0.95, hspace=0.2, wspace=0.2 )
         cntr1 = ax.contour( self.xxg, self.yyg, self.mapro, levels=24 )        
         # fig.colorbar(cntr1, ax=ax)
         ax.set_aspect('equal', adjustable='box')

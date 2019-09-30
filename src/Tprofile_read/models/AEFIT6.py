@@ -236,7 +236,7 @@ class AEFIT6(models.base.VAE):
 
         def add_dense_encode(self, fdim=feature_dim, ldim=latent_dim, geometry=[]):
             for _,size in enumerate(geometry):
-                self.add(tf.keras.layers.Dense(fdim*size*scale, use_bias=False, activation=None))
+                self.add(tf.keras.layers.Dense(fdim*size*scale, use_bias=False, activation=activation))
                 self.add(tf.keras.layers.BatchNormalization(scale=False, center=True))
                 self.add(tf.keras.layers.Activation(activation))
             if len(geometry) == 0: initializer = LsInitializer()
@@ -289,7 +289,7 @@ class AEFIT6(models.base.VAE):
         return mean, logvar
 
     @tf.function
-    def decode(self, s, training=True, apply_sigmoid=None):
+    def decode(self, s, training=None, apply_sigmoid=None):
         x = self.generative_net(s, training=training)
         if apply_sigmoid is None: apply_sigmoid = self.apply_sigmoid        
         if apply_sigmoid is True and training is False:
@@ -354,4 +354,4 @@ class AEFIT6(models.base.VAE):
 
 
 
-    
+    tf.keras.layers.Dense

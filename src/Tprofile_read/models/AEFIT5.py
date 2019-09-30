@@ -191,7 +191,7 @@ class AEFIT5(models.base.VAE):
         self.dprate = dprate
         self.scale = scale
         self.activation = activation
-        self.beta = beta 
+        self.beta = tf.Variable(beta, dtype=tf.float32, name='beta', trainable=False)
         self.apply_sigmoid = False
         self.bypass = False
         
@@ -303,14 +303,15 @@ class AEFIT5(models.base.VAE):
         if self.bypass:
             XY = 0.*XY + xy # add dummy gradients passing through the ops
             kl_loss = 0.
-        self.add_loss( lambda: self.beta * kl_loss, inputs=True )
+        self.add_loss( self.beta * kl_loss )
         return XY
-    
+
     def train_step(self, data, training=True):
         xy = data[0]
         with tf.GradientTape() as tape:
             XY = self.call(xy, training=training)
-            loss = tf.reduce_mean( self.loss(xy, XY) + self.losses[0] )
+            loss = self.loss(xy, XY)# tf.reduce_mean( self.loss(xy, XY) + self.losses[0] )
+
         if training:
             gradients = tape.gradient(loss, self.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))

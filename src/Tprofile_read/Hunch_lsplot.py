@@ -276,6 +276,10 @@ class LSPlotBokeh(LSPlot):
         ts,tl = [x for x in ds][0]
         def normalize(data):
             return (data - np.min(data)) / (np.max(data) - np.min(data))
+        def standardize_sigma(data, s=2):
+            m = np.mean(data)-s*np.sqrt(np.var(data))
+            M = np.mean(data)+s*np.sqrt(np.var(data))
+            return (data - m) / (M-m)
 
         # if model.latent_dim > 2:
         #     from sklearn.manifold import TSNE
@@ -314,13 +318,13 @@ class LSPlotBokeh(LSPlot):
                         vx=v[:,0].numpy(), vy=v[:,1].numpy(), 
                         v_sum=(v[:,0].numpy()+v[:,1].numpy()),
                         zx=z[:,0].numpy(), zy=z[:,1].numpy(),
-                        tcentro=normalize(dc['tcentro']),
-                        tbordo=normalize(dc['tbordo']),
+                        tcentro=standardize_sigma(dc['tcentro']),
+                        tbordo=standardize_sigma(dc['tbordo']),
                         Ip=normalize(dc['Ip']),
-                        dsxm=normalize(dc['Te_dsxm']),
-                        dens=normalize(dc['dens']),
-                        F=normalize(dc['F']),
-                        NS=normalize(dc['NS']),
+                        dsxm=standardize_sigma(dc['Te_dsxm']),
+                        dens=standardize_sigma(dc['dens']),
+                        F=standardize_sigma(dc['F']),
+                        NS=standardize_sigma(dc['NS']),
                         label=tl.numpy()
                     )
             self._data_ls.data = data

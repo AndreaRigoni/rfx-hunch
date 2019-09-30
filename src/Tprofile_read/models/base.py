@@ -239,6 +239,9 @@ def train(model, data, validation_data=None, epoch=40, batch=200, learning_rate=
     history = model.fit(data, epochs=epoch, callbacks=callbacks + tensorboard_log(log_name), verbose=1) 
     return history
     
+
+tf.keras.Model.fit
+
 def train_thread(model, data, epoch=40, batch=200, learning_rate=1e-3, log_name=None, callbacks=None):     
     from nbmultitask import ThreadWithLogAndControls
     from nbmultitask import ProcessWithLogAndControls

@@ -37,7 +37,7 @@ class SNEPlot():
         self._model = model
 
     def set_data(self, data):        
-        assert isinstance(data, QSH_Dataset), "Input variables should be QSH dataset"
+        assert isinstance(data, Dataset_QSH), "Input variables should be QSH dataset"
         self._data = data    
     
 
